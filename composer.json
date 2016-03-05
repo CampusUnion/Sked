@@ -1,0 +1,24 @@
+{
+    "name": "campusunion/sked",
+    "description": "Open source PHP calendar library",
+    "license": "MIT",
+    "homepage": "http://github.com/CampusUnion/Sked",
+    "support": {
+        "issues": "http://github.com/CampusUnion/Sked/issues",
+        "source": "http://github.com/CampusUnion/Sked"
+    },
+    "authors": [
+    {
+        "name": "Mark Potter",
+        "email": "mark@thecampusunion.com"
+    }
+    ],
+    "require": {
+        "php": ">=7.0",
+    },
+    "autoload": {
+        "psr-4": {
+          "CampusUnion\\Sked\\": "src/"
+        },
+    }
+}
