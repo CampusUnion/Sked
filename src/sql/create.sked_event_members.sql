@@ -3,8 +3,8 @@ CREATE TABLE `sked_event_members` (
     `member_id` INT UNSIGNED COMMENT '',
     `owner` TINYINT(1) UNSIGNED COMMENT '',
     `created_at` DATETIME NOT NULL,
-    `updated_at` DATETIME DEFAULT CURRENT TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    PRIMARY KEY (`sked_event_id`, `participant_id`),
+    PRIMARY KEY (`sked_event_id`, `member_id`),
     FOREIGN KEY (`sked_event_id`) REFERENCES `sked_events` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -15,7 +15,7 @@ CREATE TABLE `sked_events` (
     `frequency` TINYINT DEFAULT 1 COMMENT 'Number of intervals between events (1 is every, 2 is every-other, etc.)',
     `ends_at` DATETIME DEFAULT NULL COMMENT 'Last event in the series (NOT the ending time of the first event). NULL if once or indefinite',
     `created_at` DATETIME NOT NULL,
-    `updated_at` DATETIME DEFAULT CURRENT TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (`id`),
     KEY (`starts_at`),
