@@ -38,33 +38,33 @@ class SkeDateIterator implements Iterator {
     }
 
     /** @return SkeDate Get current iteration. */
-    public current()
+    public function current()
     {
         return new SkeDate($this->strCurrentValue, $this->oModel);
     }
 
     /** @return int Get current key. */
-    public key()
+    public function key()
     {
         return $this->iCurrentKey;
     }
 
     /** Advance to the next iteration. */
-    public next()
+    public function next()
     {
         $this->iCurrentKey++;
         $this->strCurrentValue = strftime('%Y-%m-%d', strtotime($this->strCurrentValue . ' +1 day'));
     }
 
     /** Go to the beginning. */
-    public rewind()
+    public function rewind()
     {
         $this->iCurrentKey = 0;
         $this->strCurrentValue = $this->strStart;
     }
 
     /** @return bool Are we done yet? */
-    public valid()
+    public function valid()
     {
         return $this->strCurrentValue >= $this->strStart
             && (is_null($this->strEnd) || $this->strCurrentValue <= $this->strEnd)

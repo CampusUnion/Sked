@@ -33,7 +33,7 @@ class Sked {
      * @param string $strEndDate
      * @return CampusUnion\Sked\SkeDateIterator
      */
-    public function skeDates($strStartDate = null, $strEndDate = null)
+    public function skeDates(string $strStartDate = null, string $strEndDate = null)
     {
         $this->validateDate([$strStartDate, $strEndDate]);
         return new SkeDateIterator($this->oModel, $strStartDate, $strEndDate);
@@ -46,7 +46,7 @@ class Sked {
      * @param string $strEndDate
      * @return CampusUnion\Sked\SkeDateIterator
      */
-    public function dates($strStartDate, $strEndDate = null)
+    public function dates(string $strStartDate, string $strEndDate = null)
     {
         return $this->skeDates($strStartDate, $strEndDate);
     }
