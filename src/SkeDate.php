@@ -45,7 +45,7 @@ class SkeDate {
      * @param string $strFormat PHP date format.
      * @return string
      */
-    public function format($strFormat = 'Y-m-d')
+    public function format(string $strFormat = 'Y-m-d')
     {
         return date($strFormat, strtotime($this->strDate));
     }

@@ -11,7 +11,7 @@ sql/create.sked_event_members.sql
 sql/create.sked_event_tags.sql
 ```
 
-Then instantiate Sked in your code with data connection credentials:
+Then, instantiate Sked in your code with data connection credentials:
 
 ```php
 $sked = new \CampusUnion\Sked([
@@ -67,7 +67,7 @@ Retrieve any database field (see SQL queries) as a property:
 echo $skeVent->label;
 ```
 
-Print the time using the `time()` method, which accepts a formatting
+Print the event time using the `time()` method, which accepts a formatting
 string as an optional parameter (see
 [formatting options](http://php.net/manual/en/function.date.php#refsect1-function.date-parameters)
 for PHP's `date` function):
