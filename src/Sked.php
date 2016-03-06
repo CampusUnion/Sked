@@ -4,10 +4,13 @@ namespace CampusUnion\Sked;
 
 class Sked {
 
+    use ValidatesDates;
+
     /** @var CampusUnion\Sked\Database\SkeModel Data layer. */
     protected $oModel;
 
     /**
+     * Init Sked.
      *
      * @param array $aOptions Config options.
      */
@@ -24,11 +27,28 @@ class Sked {
     }
 
     /**
+     * Get dates iterator.
      *
+     * @param string $strStartDate
+     * @param string $strEndDate
+     * @return CampusUnion\Sked\SkeDateIterator
      */
-    public function skeDates($mStart, $mEnd = null)
+    public function skeDates($strStartDate = null, $strEndDate = null)
     {
-        return new SkeDateIterator($this->oModel, $mStart, $mEnd);
+        $this->validateDate([$strStartDate, $strEndDate]);
+        return new SkeDateIterator($this->oModel, $strStartDate, $strEndDate);
+    }
+
+    /**
+     * Shortcut for skeDates(). If you use this, you're boring.
+     *
+     * @param string $strStartDate
+     * @param string $strEndDate
+     * @return CampusUnion\Sked\SkeDateIterator
+     */
+    public function dates($strStartDate, $strEndDate = null)
+    {
+        return $this->skeDates($strStartDate, $strEndDate);
     }
 
 }

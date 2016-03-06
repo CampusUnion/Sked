@@ -26,11 +26,16 @@ abstract class SkeModel {
     abstract public function __construct(array $aOptions);
 
     /**
+     * Fetch event sessions from the database.
      *
-     * @return array // @todo WILL THIS BE AN ARRAY???
+     * @param string $strDate Date of event sessions to fetch.
+     * @param int $iMemberId Optional member ID to limit results for a single person.
+     * @param int $iTimezoneOffset Optional timezone adjustment.
+     * @return array
      */
     public function fetch(string $strDate, int $iMemberId = null, int $iTimezoneOffset = 0)
     {
+        // Filter input
         $this->validateDate($strDate);
         $strDateStart = $strDate . ' 00:00:00';
         if ($iTimezoneOffset) {
@@ -41,10 +46,11 @@ abstract class SkeModel {
         }
         $strDateEnd = date('Y-m-d H:i:s', strtotime($strDateStart . ' + 1 day - 1 second'));
 
-        $aResults = $this->query();
-        // @todo SORT RESULTS BY TIME
-
-        return $aResults;
+        // Get results and sort by time
+        return usort($this->query($strDateStart, $strDateEnd, $iMemberId), function($aResult1, $aResult2) {
+            return $aResult1['session_at'] <=> $aResult2['session_at']
+                ?: $aResult1['starts_at'] <=> $aResult2['starts_at'];
+        });
     }
 
 }

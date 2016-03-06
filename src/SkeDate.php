@@ -29,11 +29,25 @@ class SkeDate {
      * Get today's events.
      *
      * @param int $iMemberId Unique ID of the event participant.
-     * @return array // @todo WILL THIS BE AN ARRAY???
+     * @return array
      */
     public function skeVents(int $iMemberId = null)
     {
-        return $this->oModel->fetch($this->strDate, $iMemberId);
+        $aReturn = [];
+        foreach ($this->oModel->fetch($this->strDate, $iMemberId) as $aEvent)
+            $aReturn[] = new SkeVent($aEvent);
+        return $aReturn;
+    }
+
+    /**
+     * Format the date using the given pattern.
+     *
+     * @param string $strFormat PHP date format.
+     * @return string
+     */
+    public function format($strFormat = 'Y-m-d')
+    {
+        return date($strFormat, strtotime($this->strDate));
     }
 
 }
