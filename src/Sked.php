@@ -22,7 +22,7 @@ class Sked {
         if (!isset($aOptions['data_connector']['options']) || !is_array($aOptions['data_connector']['options']))
             throw new Exception('Must pass an array of data_connector[options] to ' . __METHOD__);
 
-        $strModelClass = 'Database\SkeModel' . ucfirst($aOptions['data_connector']['name']);
+        $strModelClass = 'CampusUnion\Sked\Database\SkeModel' . ucfirst($aOptions['data_connector']['name']);
         $this->oModel = new $strModelClass($aOptions['data_connector']['options']);
     }
 

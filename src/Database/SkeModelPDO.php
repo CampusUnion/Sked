@@ -11,8 +11,8 @@ class SkeModelPDO extends SkeModel {
      */
     public function __construct(array $aOptions)
     {
-        $strDsn = $aOptions['type'] . ':host=' . $aOptions['host'] . ';dbname=' . $aOptions['dbname'];
-        $this->oConnector = new PDO($strDsn, $aOptions['user'], $aOptions['pass']);
+        $strDsn = $aOptions['driver'] . ':host=' . $aOptions['host'] . ';dbname=' . $aOptions['dbname'];
+        $this->oConnector = new \PDO($strDsn, $aOptions['user'], $aOptions['pass']);
     }
 
     /**

@@ -4,7 +4,7 @@ namespace CampusUnion\Sked\Database;
 
 abstract class SkeModel {
 
-    use CampusUnion\Sked\ValidatesDates;
+    use \CampusUnion\Sked\ValidatesDates;
 
     /** @var mixed $oConnector Database connector. */
     protected $oConnector;

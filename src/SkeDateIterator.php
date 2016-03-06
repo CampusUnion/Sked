@@ -2,7 +2,7 @@
 
 namespace CampusUnion\Sked;
 
-class SkeDateIterator implements Iterator {
+class SkeDateIterator implements \Iterator {
 
     use ValidatesDates;
 
