@@ -1,4 +1,4 @@
-# SudoBible
+# Sked
 Open source PHP Calendar library.
 
 ## Installation & Setup
