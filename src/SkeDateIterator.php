@@ -16,10 +16,10 @@ class SkeDateIterator implements \Iterator {
     protected $strEnd;
 
     /** @var int $iCurrentKey Current iteration key. */
-    protected $iCurrentKey;
+    private $iCurrentKey;
 
     /** @var string $strCurrentValue Current iteration date YYYY-MM-DD. */
-    protected $strCurrentValue;
+    private $strCurrentValue;
 
     /**
      * Init the iterator with start & end values.

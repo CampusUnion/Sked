@@ -10,6 +10,13 @@ abstract class SkeModel {
     protected $oConnector;
 
     /**
+     * Init the data connector.
+     *
+     * @param array $aOptions
+     */
+    abstract public function __construct(array $aOptions);
+
+    /**
      * Build the events query.
      *
      * @param string $strDateStart Datetime that today starts.
@@ -19,11 +26,12 @@ abstract class SkeModel {
     abstract protected function query(string $strDateStart, string $strDateEnd, int $iMemberId = null);
 
     /**
-     * Init the data connector.
+     * Persist event data to the database.
      *
-     * @param array $aOptions
+     * @param array $aData Array of data to persist.
+     * @return bool Success/failure.
      */
-    abstract public function __construct(array $aOptions);
+    abstract public function save(array $aData);
 
     /**
      * Fetch event sessions from the database.

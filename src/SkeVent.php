@@ -4,16 +4,39 @@ namespace CampusUnion\Sked;
 
 class SkeVent {
 
+    /** @var string INTERVAL_ONCE */
+    const INTERVAL_ONCE = 'Once';
+
+    /** @var string INTERVAL_DAILY */
+    const INTERVAL_DAILY = '1';
+
+    /** @var string INTERVAL_WEEKLY */
+    const INTERVAL_WEEKLY = '7';
+
+    /** @var string INTERVAL_MONTHLY */
+    const INTERVAL_MONTHLY = 'Monthly';
+
     /** @var array $aProperties Array of properties retrieved from the database. */
     protected $aProperties;
 
     /**
-     * Init the date object.
+     * Init the event object.
      *
-     * @param array $aProperties Array of properties retrieved from the database.
+     * @param array $aProperties Array of database fields/properties.
      */
     public function __construct(array $aProperties = [])
     {
+        // Parse weekday values
+        if (isset($aProperties['weekdays'])) {
+            foreach ((array)$aProperties['weekdays'] as $strDay)
+                $aProperties[$strDay] = 1;
+            unset($aProperties['weekdays']);
+        }
+
+        // Set defaults
+        if (!isset($aProperties['created_at']))
+            $aProperties['created_at'] = date('Y-m-d H:i:s');
+
         $this->aProperties = $aProperties;
     }
 
@@ -63,6 +86,16 @@ class SkeVent {
             $strFormat,
             strtotime($this->session_at ?? $this->starts_at) + ($iTimezoneOffset * 60 * 60)
         );
+    }
+
+    /**
+     * Convert to an array of database properties.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->aProperties;
     }
 
 }

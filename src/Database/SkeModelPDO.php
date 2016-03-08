@@ -105,4 +105,43 @@ class SkeModelPDO extends SkeModel {
         return $oSelect->fetchAll();
     }
 
+    /**
+     * Persist event data to the database.
+     *
+     * @param array $aData Array of data to persist.
+     * @return bool Success/failure.
+     */
+    public function save(array $aData)
+    {
+        // Set up binding params
+        $aValues = $aExecParams = [];
+        $bUpdating = false;
+
+        if ($aData['id'] ?? false) {
+            $bUpdating = true;
+            $aExecParams[':id_value'] = $aData['id'];
+            unset($aData['id']);
+        }
+
+        foreach ($aData as $strKey => $mValue) {
+            $strValueParam = ':' . $strKey . '_value';
+            $aValues[] = $bUpdating
+                ? '`' . $strKey . '` = ' . $strValueParam
+                : $strValueParam;
+            $aExecParams[$strValueParam] = $mValue;
+        }
+
+        $oStmt = $this->oConnector->prepare($bUpdating
+            ? 'UPDATE sked_events SET ' . implode(',', $aValues)
+                . ' WHERE `id` = :id_value'
+            : 'INSERT INTO sked_events (`' . implode('`,`', array_keys($aData))
+                . '`) VALUES (' . implode(',', $aValues) . ')'
+        );
+
+        if (!$oStmt->execute($aExecParams))
+            throw new \Exception($oStmt->errorInfo()[2]);
+        else
+            return true;
+    }
+
 }

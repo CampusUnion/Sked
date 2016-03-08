@@ -40,6 +40,17 @@ class Sked {
     }
 
     /**
+     * Persist event data to the database.
+     *
+     * @param CampusUnion\Sked\SkeVent $skeVent
+     * @return bool
+     */
+    public function save(SkeVent $skeVent)
+    {
+        return $this->oModel->save($skeVent->toArray());
+    }
+
+    /**
      * Shortcut for skeDates(). If you use this, you're boring.
      *
      * @param string $strStartDate
@@ -49,6 +60,17 @@ class Sked {
     public function dates(string $strStartDate, string $strEndDate = null)
     {
         return $this->skeDates($strStartDate, $strEndDate);
+    }
+
+    /**
+     * Get the HTML form.
+     *
+     * @param array $aOptions Optional array of config options.
+     * @return CampusUnion\Sked\SkeForm
+     */
+    public function form(array $aOptions = [])
+    {
+        return new SkeForm($aOptions);
     }
 
 }

@@ -30,6 +30,16 @@ $sked = new \CampusUnion\Sked([
 
 ## Basic usage
 
+### Event form
+```php
+echo $sked->form();
+```
+
+### Saving events to the database
+```php
+$sked->save(new SkeVent($_POST));
+```
+
 Build a custom calendar by iterating through a specified date range:
 ```php
 foreach ($sked->skeDates('2016-08-05', '2016-09-21')) {
