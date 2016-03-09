@@ -4,6 +4,9 @@ namespace CampusUnion\Sked;
 
 class SkeForm {
 
+    /** @var CampusUnion\Sked\SkeVent Event object for populating defaults. */
+    protected $skeVent;
+
     /** @var string $strAction Form submit URL. */
     protected $strAction;
 
@@ -20,12 +23,14 @@ class SkeForm {
      * Init the form.
      *
      * @param array $aOptions Optional array of config options.
+     * @param CampusUnion\Sked\SkeVent $skeVent Event object for populating form defaults.
      */
-    public function __construct(array $aOptions =[])
+    public function __construct(array $aOptions =[], SkeVent $skeVent = null)
     {
-        $this->beforeInput($aOptions)
-            ->afterInput($aOptions)
-            ->attribs($aOptions);
+        $this->setBeforeInput($aOptions)
+            ->setAfterInput($aOptions)
+            ->setAttribs($aOptions)
+            ->setSkeVent($skeVent);
     }
 
     /**
@@ -36,7 +41,7 @@ class SkeForm {
      *                     function to remove the beforeInput from the original array.
      * @return $this
      */
-    public function beforeInput(&$mBeforeInput)
+    public function setBeforeInput(&$mBeforeInput)
     {
         if (is_array($mBeforeInput)) {
             $strBeforeInput = $mBeforeInput['beforeInput'] ?? null;
@@ -58,7 +63,7 @@ class SkeForm {
      *                     function to remove the beforeInput from the original array.
      * @return $this
      */
-    public function afterInput($mAfterInput)
+    public function setAfterInput($mAfterInput)
     {
         if (is_array($mAfterInput)) {
             $strAfterInput = $mAfterInput['beforeInput'] ?? null;
@@ -78,14 +83,30 @@ class SkeForm {
      * @param array The HTML element attributes.
      * @return $this
      */
-    public function attribs(array $aAttribs)
+    public function setAttribs(array $aAttribs)
     {
+        if (!isset($aAttribs['method']))
+            $aAttribs['method'] = 'POST';
         $this->aAttribs = $aAttribs;
         return $this;
     }
 
+    /**
+     * Save event object for populating defaults.
+     *
+     * @param array|CampusUnion\Sked\SkeVent Event object for populating defaults.
+     * @return $this
+     */
+    public function setSkeVent($skeVent)
+    {
+        if (is_array($skeVent))
+            $skeVent = new SkeVent($skeVent);
+        $this->skeVent = $skeVent;
+        return $this;
+    }
+
     /** @return array List of form fields. */
-    protected function getFieldDefinitions()
+    public static function getFieldDefinitions()
     {
         // Set up options for 'duration'
         $aDurationOptions = [];
@@ -172,13 +193,17 @@ class SkeForm {
     public function inputs()
     {
         $aReturn = [];
-        foreach ($this->getFieldDefinitions() as $strName => $aField) {
-            $aReturn[] = new SkeFormInput(
-                $strName,
+        foreach (static::getFieldDefinitions() as $strFieldName => $aField) {
+            $skeFormInput = new SkeFormInput(
+                $strFieldName,
                 $aField['type'] ?? 'text',
                 $aField['options'] ?? [],
                 $aField['attribs'] ?? []
             );
+            // Set value for existing event
+            if ($this->skeVent)
+                $skeFormInput->setValue($this->skeVent->getProperty($strFieldName));
+            $aReturn[] = $skeFormInput;
         }
         return $aReturn;
     }
@@ -191,6 +216,7 @@ class SkeForm {
     public function __toString()
     {
         $strHtml = '<form ' . $this->renderAttribs() . '>';
+        $strHtml .= '<input type="hidden" name="sked_form" value="1">';
         foreach ($this->inputs() as $oInput) {
             // Start the repeating-event section
             if ('ends_at' === $oInput->getName())
@@ -206,6 +232,7 @@ class SkeForm {
             if (!in_array($oInput->getName(), ['frequency', 'id']))
                 $strHtml .= $this->strAfterInput;
         }
+        $strHtml .= '<button type="submit">Submit</button>';
         return $strHtml . '</form>';
     }
 

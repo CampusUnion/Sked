@@ -4,15 +4,6 @@ namespace CampusUnion\Sked;
 
 class SkeFormInput {
 
-    /** @var string $strName Name/ID of the field. */
-    protected $strName;
-
-    /** @var string $strLabel Label that goes before the element. */
-    protected $strLabel;
-
-    /** @var string $strElementType Type of HTML element. */
-    protected $strElementType;
-
     /** @var array $aAttribs Array of element attributes. */
     protected $aAttribs = [];
 
@@ -21,6 +12,18 @@ class SkeFormInput {
 
     /** @var bool $bMulti Is this a multi-element input? */
     protected $bMulti = false;
+
+    /** @var mixed $mValue Default field value. */
+    protected $mValue;
+
+    /** @var string $strElementType Type of HTML element. */
+    protected $strElementType;
+
+    /** @var string $strLabel Label that goes before the element. */
+    protected $strLabel;
+
+    /** @var string $strName Name/ID of the field. */
+    protected $strName;
 
     /**
      * Init the input object.
@@ -79,6 +82,18 @@ class SkeFormInput {
     }
 
     /**
+     * Set current field value.
+     *
+     * @param mixed $mValue
+     * @return $this
+     */
+    public function setValue($mValue)
+    {
+        $this->mValue = $mValue;
+        return $this;
+    }
+
+    /**
      * Render the element.
      *
      * @return string HTML
@@ -103,8 +118,12 @@ class SkeFormInput {
             // An indexed array means use the label as the value also.
             $bLabelIsValue = isset($this->aOptions[0]);
             foreach ($this->aOptions as $mValue => $strLabel) {
-                $strHtml .= '<option value="' . ($bLabelIsValue ? $strLabel : $mValue)
-                    . '">' . $strLabel . '</>';
+                if ($bLabelIsValue)
+                    $mValue = $strLabel;
+                $strSelected = isset($this->mValue) && $this->mValue === (string)$mValue
+                    ? ' selected' : '';
+                $strHtml .= '<option value="' . $mValue . '"' . $strSelected . '>'
+                    . $strLabel . '</>';
             }
         }
 
@@ -127,9 +146,12 @@ class SkeFormInput {
         // An indexed array means use the label as the value also.
         $bLabelIsValue = isset($this->aOptions[0]);
         foreach ($this->aOptions as $mValue => $strLabel) {
-            $strHtml .= '<input value="'
-                . ($bLabelIsValue ? $strLabel : $mValue) . '" '
-                . $this->renderAttribs() . '>' . $strLabel;
+            if ($bLabelIsValue)
+                $mValue = $strLabel;
+            $strSelected = isset($this->mValue) && in_array($strLabel, $this->mValue)
+                ? ' checked' : '';
+            $strHtml .= '<input value="' . $mValue . '" ' . $this->renderAttribs()
+                . $strSelected . '>' . $strLabel;
         }
 
         return $strHtml;
@@ -142,13 +164,20 @@ class SkeFormInput {
      */
     protected function renderAttribs()
     {
-        $strHtml = 'name="' . $this->strName . '"';
+        // Element name
+        $aHtml = ['name="' . $this->strName . '"'];
+
+        // Default value
+        if ($this->mValue && empty($this->aOptions))
+            $aHtml[] = 'value="' . $this->mValue . '"';
+
+        // Misc attribs
         foreach ($this->aAttribs as $strKey => $mValue) {
-            $strHtml .= is_bool($mValue)
+            $aHtml[] = is_bool($mValue)
                 ? ($mValue ? $strKey : '') // just the attribute name for booleans
                 : $strKey . '="' . $mValue . '"'; // otherwise key="value"
         }
-        return $strHtml;
+        return implode(' ', $aHtml);
     }
 
     /**

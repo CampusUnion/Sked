@@ -42,12 +42,17 @@ class Sked {
     /**
      * Persist event data to the database.
      *
+     * Updates the ID of the original event object.
+     *
      * @param CampusUnion\Sked\SkeVent $skeVent
      * @return bool
      */
-    public function save(SkeVent $skeVent)
+    public function save(SkeVent &$skeVent)
     {
-        return $this->oModel->save($skeVent->toArray());
+        if ($iId = $this->oModel->save($skeVent->toArray()))
+            $skeVent->id = $iId;
+
+        return !!$iId;
     }
 
     /**
@@ -66,11 +71,28 @@ class Sked {
      * Get the HTML form.
      *
      * @param array $aOptions Optional array of config options.
+     * @param array|CampusUnion\Sked\SkeVent $skeVent Event object for populating form defaults.
      * @return CampusUnion\Sked\SkeForm
      */
-    public function form(array $aOptions = [])
+    public function form(array $aOptions = [], $skeVent = null)
     {
-        return new SkeForm($aOptions);
+        return new SkeForm($aOptions, $skeVent);
+    }
+
+    /**
+     * Do it all in one easy method call.
+     *
+     * @param array $aOptions Config options.
+     */
+    public static function skeDoosh(array $aOptions)
+    {
+        $sked = new self($aOptions);
+        $skeVent = null;
+        if ($_REQUEST['sked_form'] ?? null === '1') {
+            $skeVent = new \CampusUnion\Sked\SkeVent($_REQUEST);
+            $sked->save($skeVent);
+        }
+        echo $sked->form(['method' => 'get'], $skeVent);
     }
 
 }

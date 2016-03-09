@@ -48,7 +48,13 @@ class SkeVent {
      */
     public function getProperty(string $strKey)
     {
-        return $this->aProperties[$strKey] ?? null;
+        if ('weekdays' === $strKey) {
+            $aReturn = array_keys(array_intersect_key(
+                $this->aProperties,
+                array_flip(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+            ), 1);
+        }
+        return $aReturn ?? $this->aProperties[$strKey] ?? null;
     }
 
     /**
@@ -95,7 +101,20 @@ class SkeVent {
      */
     public function toArray()
     {
-        return $this->aProperties;
+        // Sanitize
+        $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
+            return !empty($mValue) && (
+                'created_at' === $strKey || 'updated_at' === $strKey
+                || in_array($strKey, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+                || array_key_exists($strKey, SkeForm::getFieldDefinitions())
+            );
+        }, ARRAY_FILTER_USE_BOTH);
+        if (isset($aReturn['starts_at']))
+            $aReturn['starts_at'] = date('Y-m-d H:i:s', strtotime($aReturn['starts_at']));
+        if (isset($aReturn['ends_at']))
+            $aReturn['ends_at'] = date('Y-m-d H:i:s', strtotime($aReturn['ends_at']));
+
+        return $aReturn;
     }
 
 }

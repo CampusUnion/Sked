@@ -29,7 +29,7 @@ abstract class SkeModel {
      * Persist event data to the database.
      *
      * @param array $aData Array of data to persist.
-     * @return bool Success/failure.
+     * @return int|bool Success/failure.
      */
     abstract public function save(array $aData);
 

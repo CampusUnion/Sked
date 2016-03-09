@@ -109,7 +109,7 @@ class SkeModelPDO extends SkeModel {
      * Persist event data to the database.
      *
      * @param array $aData Array of data to persist.
-     * @return bool Success/failure.
+     * @return int|bool Success/failure.
      */
     public function save(array $aData)
     {
@@ -141,7 +141,7 @@ class SkeModelPDO extends SkeModel {
         if (!$oStmt->execute($aExecParams))
             throw new \Exception($oStmt->errorInfo()[2]);
         else
-            return true;
+            return $aExecParams[':id_value'] ?? $this->oConnector->lastInsertId();
     }
 
 }
