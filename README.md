@@ -93,3 +93,25 @@ offset integer:
 ```php
 echo $skeVent->time(null, -5); // outputs the time adjusted for US Eastern Standard time
 ```
+
+## Basic-er Usage
+
+For an instant, non-customized event form, use the magical `skeDoosh()` method.
+The only required configuration is connection parameters for your data store.
+Call `skeDoosh()` from the exact spot in your code where you want the HTML form
+to be displayed:
+
+```php
+Sked::skeDoosh([
+    'data_connector' => [
+        'name' => 'PDO',
+        'options' => [
+            'driver' => 'mysql',
+            'host' => 'localhost',
+            'dbname' => 'homestead',
+            'user' => 'homestead',
+            'pass' => 'secret',
+        ],
+    ],
+]);
+```

@@ -86,6 +86,36 @@ class Sked {
      */
     public static function skeDoosh(array $aOptions)
     {
+        // Load JS
+        echo <<<EOD
+<script>
+    if (typeof jQuery == 'undefined') {
+        skedLoadTag(
+            'http://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js',
+            loadSkedJs
+        );
+    } else {
+         loadSkedJs();
+    }
+
+    function skedLoadTag(strSrc, fnOnload)
+    {
+        var eHead = document.getElementsByTagName('head')[0];
+        var e$ = document.createElement('script');
+        e$.src = strSrc;
+        if (fnOnload)
+            e$.onload = fnOnload;
+        eHead.appendChild(e$);
+    }
+
+    function loadSkedJs()
+    {
+        skedLoadTag('https://raw.githubusercontent.com/CampusUnion/Sked-JS/master/sked.js');
+    }
+</script>
+EOD;
+
+        // Init Sked
         $sked = new self($aOptions);
         $skeVent = null;
         if ($_REQUEST['sked_form'] ?? null === '1') {

@@ -87,6 +87,8 @@ class SkeForm {
     {
         if (!isset($aAttribs['method']))
             $aAttribs['method'] = 'POST';
+        $aAttribs['class'] = isset($aAttribs['class'])
+            ? $aAttribs['class'] . ' sked-form' : 'sked-form';
         $this->aAttribs = $aAttribs;
         return $this;
     }
@@ -157,7 +159,7 @@ class SkeForm {
                 'type' => 'select',
                 'options' => range(1, 31),
                 'attribs' => [
-                    'label' => 'Repeate every',
+                    'label' => 'Repeat every',
                 //     'disabled' => true,
                 ],
             ],
