@@ -2,6 +2,9 @@
 
 namespace CampusUnion\Sked\Database;
 
+use CampusUnion\Sked\SkeForm;
+use CampusUnion\Sked\SkeVent;
+
 abstract class SkeModel {
 
     use \CampusUnion\Sked\ValidatesDates;
@@ -31,7 +34,7 @@ abstract class SkeModel {
      * @param array $aData Array of data to persist.
      * @return int|bool Success/failure.
      */
-    abstract public function save(array $aData);
+    abstract protected function saveEvent(array $aData);
 
     /**
      * Fetch event sessions from the database.
@@ -59,6 +62,104 @@ abstract class SkeModel {
             return $aResult1['session_at'] <=> $aResult2['session_at']
                 ?: $aResult1['starts_at'] <=> $aResult2['starts_at'];
         });
+    }
+
+    /**
+     * Persist data to the database.
+     *
+     * @param CampusUnion\Sked\SkeVent $skeVent Passed by reference.
+     * @return int|bool Success/failure.
+     */
+    public function save(SkeVent &$skeVent)
+    {
+        return $this->validateEvent($skeVent) ? $this->saveEvent($skeVent->toArray()) : false;
+    }
+
+    /**
+     * Validate the event data.
+     *
+     * If errors are found, adds them to the SkeVent object.
+     *
+     * @param CampusUnion\Sked\SkeVent $skeVent Passed by reference.
+     * @return bool Valid/invalid.
+     */
+    protected function validateEvent(SkeVent &$skeVent)
+    {
+        $bValid = true;
+        $skeVent->resetErrors();
+        $aData = $skeVent->toArray();
+
+        // Check required fields && valid options
+        foreach (SkeForm::getFieldDefinitions() as $strKey => $aDefinition) {
+
+            // Required
+            if (($aDefinition['required'] ?? false) && !isset($aData[$strKey])) {
+                $bValid = false;
+                $skeVent->addError(
+                    $strKey,
+                    'The "' . $aDefinition['attribs']['label'] . '" field is required.'
+                );
+
+            // Valid option
+            } elseif (!$this->validateOption($aData[$strKey] ?? null, $aDefinition['options'] ?? null)) {
+                $bValid = false;
+                $skeVent->addError(
+                    $strKey,
+                    'An invalid ' . $strKey . ' option was given.'
+                );
+            }
+        }
+
+        // Check recurring-event fields
+        if (isset($aData['ends_at'])) {
+            if (!isset($aData['frequency'])) {
+                $bValid = false;
+                $skeVent->addError(
+                    'frequency',
+                    'A frequency is required for recurring events.'
+                );
+            }
+            if (!isset($aData['interval'])) {
+                $bValid = false;
+                $skeVent->addError(
+                    'interval',
+                    'An interval (daily, weekly, etc.) is required for recurring events.'
+                );
+            }
+        }
+        if (isset($aData['frequency']) && !isset($aData['interval'])) {
+            $bValid = false;
+            $skeVent->addError(
+                'interval',
+                'An interval (daily, weekly, etc.) is required when a frequency is selected.'
+            );
+        }
+        if (isset($aData['interval'])) {
+            if (SkeVent::INTERVAL_DAILY === $aData['interval'] && isset($aData['weekdays'])) {
+                $bValid = false;
+                $skeVent->addError(
+                    'weekdays',
+                    'A day of the week cannot be selected for daily events.'
+                );
+            }
+        }
+
+        return $bValid;
+    }
+
+    /**
+     * Check if value is a valid option.
+     *
+     * If either value or options is null, return true (no validation rules).
+     *
+     * @param int|string $mValue The value in question.
+     * @param array $aOptions The list of valid options.
+     * @return bool
+     */
+    protected function validateOption($mValue, array $aOptions = null)
+    {
+        return is_null($mValue) || is_null($aOptions)
+            || array_key_exists($mValue, $aOptions);
     }
 
 }

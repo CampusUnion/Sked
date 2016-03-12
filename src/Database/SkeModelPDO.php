@@ -111,7 +111,7 @@ class SkeModelPDO extends SkeModel {
      * @param array $aData Array of data to persist.
      * @return int|bool Success/failure.
      */
-    public function save(array $aData)
+    protected function saveEvent(array $aData)
     {
         // Set up binding params
         $aValues = $aExecParams = [];

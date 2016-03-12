@@ -16,6 +16,9 @@ class SkeVent {
     /** @var string INTERVAL_MONTHLY */
     const INTERVAL_MONTHLY = 'Monthly';
 
+    /** @var array $aErrors List of validation errors. */
+    protected $aErrors = [];
+
     /** @var array $aProperties Array of properties retrieved from the database. */
     protected $aProperties;
 
@@ -38,6 +41,62 @@ class SkeVent {
             $aProperties['created_at'] = date('Y-m-d H:i:s');
 
         $this->aProperties = $aProperties;
+    }
+
+    /**
+     * Add a validation error.
+     *
+     * @param string $strKey Name of the erroneous form field.
+     * @param string $strMessage Detailed error message.
+     * @return $this
+     */
+    public function addError(string $strKey, string $strMessage)
+    {
+        $this->aErrors[$strKey] = $strMessage;
+        return $this;
+    }
+
+    /**
+     * Get error message by field name.
+     *
+     * @param string $strKey Name of the form field.
+     * @return string Detailed error message.
+     */
+    public function getError(string $strKey)
+    {
+        return $this->aErrors[$strKey] ?? null;
+    }
+
+    /**
+     * Check for error message by field name.
+     *
+     * @param string $strKey Name of the form field.
+     * @return bool
+     */
+    public function hasError(string $strKey)
+    {
+        return isset($this->aErrors[$strKey]);
+    }
+
+    /**
+     * Check for any error messages.
+     *
+     * @return bool
+     */
+    public function hasErrors()
+    {
+        return !empty($this->aErrors);
+    }
+
+    /**
+     * Clear all error messages.
+     *
+     * @return $this
+     */
+    public function resetErrors()
+    {
+        $this->aErrors = [];
+        return $this;
     }
 
     /**
@@ -103,7 +162,7 @@ class SkeVent {
     {
         // Sanitize
         $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
-            return !empty($mValue) && (
+            return !empty($mValue) && '-' !== $mValue && (
                 'created_at' === $strKey || 'updated_at' === $strKey
                 || in_array($strKey, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
                 || array_key_exists($strKey, SkeForm::getFieldDefinitions())

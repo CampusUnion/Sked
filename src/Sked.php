@@ -44,12 +44,12 @@ class Sked {
      *
      * Updates the ID of the original event object.
      *
-     * @param CampusUnion\Sked\SkeVent $skeVent
+     * @param CampusUnion\Sked\SkeVent $skeVent Passed by reference.
      * @return bool
      */
     public function save(SkeVent &$skeVent)
     {
-        if ($iId = $this->oModel->save($skeVent->toArray()))
+        if ($iId = $this->oModel->save($skeVent))
             $skeVent->id = $iId;
 
         return !!$iId;
@@ -120,9 +120,9 @@ EOD;
         $skeVent = null;
         if ($_REQUEST['sked_form'] ?? null === '1') {
             $skeVent = new \CampusUnion\Sked\SkeVent($_REQUEST);
-            $sked->save($skeVent);
+            $bSuccess = $sked->save($skeVent);
         }
-        echo $sked->form(['method' => 'get'], $skeVent);
+        echo $sked->form(['method' => 'get'], $bSuccess ?: $skeVent);
     }
 
 }

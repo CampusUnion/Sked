@@ -4,6 +4,12 @@ namespace CampusUnion\Sked;
 
 class SkeForm {
 
+    /** @var array $aAttribs HTML element attributes. */
+    protected $aAttribs = [];
+
+    /** @var bool $bSuccess Was a previous submission successful? */
+    protected $bSuccess;
+
     /** @var CampusUnion\Sked\SkeVent Event object for populating defaults. */
     protected $skeVent;
 
@@ -16,21 +22,24 @@ class SkeForm {
     /** @var string $strAfterInput HTML code to print after each input. */
     protected $strAfterInput = '</p>';
 
-    /** @var array $aAttribs HTML element attributes. */
-    protected $aAttribs = [];
-
     /**
      * Init the form.
      *
      * @param array $aOptions Optional array of config options.
-     * @param CampusUnion\Sked\SkeVent $skeVent Event object for populating form defaults.
+     * @param CampusUnion\Sked\SkeVent|true $mSkeVent Event object for populating
+     *        form defaults, or true for success on a previous submission.
      */
-    public function __construct(array $aOptions =[], SkeVent $skeVent = null)
+    public function __construct(array $aOptions =[], $mSkeVent = null)
     {
         $this->setBeforeInput($aOptions)
             ->setAfterInput($aOptions)
-            ->setAttribs($aOptions)
-            ->setSkeVent($skeVent);
+            ->setAttribs($aOptions);
+        if ($mSkeVent instanceof SkeVent) {
+            $this->setSkeVent($mSkeVent)
+                ->setSuccess(!$mSkeVent->hasErrors());
+        } else {
+            $this->setSuccess($mSkeVent);
+        }
     }
 
     /**
@@ -107,6 +116,38 @@ class SkeForm {
         return $this;
     }
 
+    /**
+     * Set the success flag.
+     *
+     * @param bool|null $mSuccess
+     * @return $this
+     */
+    public function setSuccess($mSuccess)
+    {
+        $this->bSuccess = is_bool($mSuccess) ? $mSuccess : null;
+        return $this;
+    }
+
+    /**
+     * Check if previous submission failed.
+     *
+     * @return bool
+     */
+    public function isFailure()
+    {
+        return false === $this->bSuccess;
+    }
+
+    /**
+     * Check if previous submission succeeded.
+     *
+     * @return bool
+     */
+    public function isSuccess()
+    {
+        return true === $this->bSuccess;
+    }
+
     /** @return array List of form fields. */
     public static function getFieldDefinitions()
     {
@@ -135,12 +176,14 @@ class SkeForm {
                     'label' => 'Description',
                     'maxlength' => 255,
                 ],
+                'required' => true,
             ],
             'starts_at' => [
                 'attribs' => [
                     'label' => 'Starts At',
                 //     'class' => 'datetime-picker',
                 ],
+                'required' => true,
             ],
             'duration' => [
                 'type' => 'select',
@@ -157,7 +200,7 @@ class SkeForm {
             ],
             'frequency' => [
                 'type' => 'select',
-                'options' => range(1, 31),
+                'options' => ['' => '-'] + range(1, 31),
                 'attribs' => [
                     'label' => 'Repeat every',
                 //     'disabled' => true,
@@ -166,6 +209,7 @@ class SkeForm {
             'interval' => [
                 'type' => 'select',
                 'options' => [
+                    '' => '-',
                     SkeVent::INTERVAL_DAILY => 'day',
                     SkeVent::INTERVAL_WEEKLY => 'week',
                     SkeVent::INTERVAL_MONTHLY => 'month',
@@ -203,8 +247,11 @@ class SkeForm {
                 $aField['attribs'] ?? []
             );
             // Set value for existing event
-            if ($this->skeVent)
+            if ($this->skeVent) {
                 $skeFormInput->setValue($this->skeVent->getProperty($strFieldName));
+                if ($this->skeVent->hasError($strFieldName))
+                    $skeFormInput->setError($this->skeVent->getError($strFieldName));
+            }
             $aReturn[] = $skeFormInput;
         }
         return $aReturn;
@@ -217,23 +264,42 @@ class SkeForm {
      */
     public function __toString()
     {
+        // Open form
         $strHtml = '<form ' . $this->renderAttribs() . '>';
         $strHtml .= '<input type="hidden" name="sked_form" value="1">';
+        if ($this->isSuccess())
+            $strHtml .= '<div class="success">Event saved successfully!</div>';
+        elseif ($this->isFailure())
+            $strHtml .= '<div class="failure">There was a problem saving the event. See errors below.</div>';
+
+        // Add inputs
         foreach ($this->inputs() as $oInput) {
-            // Start the repeating-event section
+
+            // Start the repeating-event section before "ends_at"
             if ('ends_at' === $oInput->getName())
                 $strHtml .= '<h3>For repeating events only</h3>';
 
-            // The "interval" field must immediately follow the "frequency" field.
-            // The "id" field is hidden.
+            // Preceding HTML except:
+            // - The "interval" field must immediately follow the "frequency" field.
+            // - The "id" field is hidden.
             if (!in_array($oInput->getName(), ['interval', 'id']))
                 $strHtml .= $this->strBeforeInput;
+
+            // Errors
+            if ($oInput->hasError())
+                $strHtml .= '<div class="error">' . $oInput->getError() . '</div>';
+
+            // The input
             $strHtml .= $oInput;
-            // The "frequency" field is immediately followed by the "interval" field.
-            // The "id" field is hidden.
+
+            // Succeeding HTML except:
+            // - The "frequency" field is immediately followed by the "interval" field.
+            // - The "id" field is hidden.
             if (!in_array($oInput->getName(), ['frequency', 'id']))
                 $strHtml .= $this->strAfterInput;
         }
+
+        // Close form
         $strHtml .= '<button type="submit">Submit</button>';
         return $strHtml . '</form>';
     }

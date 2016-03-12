@@ -19,6 +19,9 @@ class SkeFormInput {
     /** @var string $strElementType Type of HTML element. */
     protected $strElementType;
 
+    /** @var string $strErrorMessage Detailed error message. */
+    protected $strErrorMessage;
+
     /** @var string $strLabel Label that goes before the element. */
     protected $strLabel;
 
@@ -79,6 +82,38 @@ class SkeFormInput {
     public function getName()
     {
         return $this->strName;
+    }
+
+    /**
+     * Get error message.
+     *
+     * @return string Detailed error message.
+     */
+    public function getError()
+    {
+        return $this->strErrorMessage;
+    }
+
+    /**
+     * Check for error message.
+     *
+     * @return bool
+     */
+    public function hasError()
+    {
+        return !!$this->strErrorMessage;
+    }
+
+    /**
+     * Set error message.
+     *
+     * @param string $strMessage Detailed error message.
+     * @return $this
+     */
+    public function setError(string $strMessage)
+    {
+        $this->strErrorMessage = $strMessage;
+        return $this;
     }
 
     /**
