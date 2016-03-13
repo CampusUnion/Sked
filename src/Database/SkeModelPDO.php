@@ -28,7 +28,7 @@ class SkeModelPDO extends SkeModel {
         $strQuery = 'SELECT *,
             CONCAT_WS(
                 " ",
-                "' . substr($this->strDatetime, 0, 10) . '",
+                "' . substr($strDateStart, 0, 10) . '",
                 DATE_FORMAT(sked_events.starts_at, "%H:%i:%s")
             ) AS session_at
             FROM sked_events'; // @todo FIX session_at
@@ -56,7 +56,7 @@ class SkeModelPDO extends SkeModel {
                 sked_events.interval = "7"
                 AND sked_events.' . date('D', strtotime($strDateStart)) . ' = 1
                 AND (
-                    DATE_DIFF(
+                    DATEDIFF(
                         :date_start_NOTIME,
                         DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d")
                     )/7
@@ -68,9 +68,9 @@ class SkeModelPDO extends SkeModel {
             $strQuery .= ' OR (
                 sked_events.interval = "Monthly"
                 AND sked_events.' . date('D', strtotime($strDateStart)) . ' = 1
-                AND TIMESTAMP_ADD(
+                AND TIMESTAMPADD(
                     MONTH,
-                    ROUND(DATE_DIFF(:date_start, DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d"))/30),
+                    ROUND(DATEDIFF(:date_start, DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d"))/30),
                     sked_events.starts_at
                 ) BETWEEN :date_start AND :date_end
             )';
@@ -86,7 +86,7 @@ class SkeModelPDO extends SkeModel {
                 AND sked_events.Sat = 0
                 AND sked_events.Sun = 0
                 AND DAYOFMONTH(sked_events.starts_at) = :date_start_DAYOFMONTH
-                AND (:date_start_YEARMONTH - EXTRACT(YEARMONTH FROM sked_events.starts_at))
+                AND (:date_start_YEARMONTH - EXTRACT(YEAR_MONTH FROM sked_events.starts_at))
                     % sked_events.frequency = 0
             )';
 
@@ -94,14 +94,16 @@ class SkeModelPDO extends SkeModel {
 
         // PDO
         $oSelect = $this->oConnector->prepare($strQuery);
-        $oSelect->execute([
+        $aParams = [
             ':member_id' => $iMemberId,
             ':date_start' => $strDateStart,
             ':date_start_NOTIME' => date('Y-m-d', strtotime($strDateStart)),
-            ':date_start_DAYOFMONTH' => date('d', $strDateStart),
-            ':date_start_YEARMONTH' => date('Ym', $strDateStart),
+            ':date_start_DAYOFMONTH' => date('d', strtotime($strDateStart)),
+            ':date_start_YEARMONTH' => date('Ym', strtotime($strDateStart)),
             ':date_end' => $strDateEnd,
-        ]);
+        ];
+        if (!$oSelect->execute($aParams))
+            throw new \Exception(__METHOD__ . ' - ' . $oSelect->errorInfo()[2]);
         return $oSelect->fetchAll();
     }
 

@@ -35,7 +35,8 @@ class Sked {
      */
     public function skeDates(string $strStartDate = null, string $strEndDate = null)
     {
-        $this->validateDate([$strStartDate, $strEndDate]);
+        $this->validateDate($strStartDate);
+        $this->validateDate($strEndDate);
         return new SkeDateIterator($this->oModel, $strStartDate, $strEndDate);
     }
 
@@ -118,6 +119,7 @@ EOD;
         // Init Sked
         $sked = new self($aOptions);
         $skeVent = null;
+        $bSuccess = false;
         if ($_REQUEST['sked_form'] ?? null === '1') {
             $skeVent = new \CampusUnion\Sked\SkeVent($_REQUEST);
             $bSuccess = $sked->save($skeVent);

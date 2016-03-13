@@ -30,7 +30,8 @@ class SkeDateIterator implements \Iterator {
      */
     public function __construct(Database\SkeModel $oModel, string $strStart = null, string $strEnd = null)
     {
-        $this->validateDate([$strStart, $strEnd]);
+        $this->validateDate($strStart);
+        $this->validateDate($strEnd);
 
         $this->oModel = $oModel;
         $this->strStart = $strStart ?: date('Y-m-d');

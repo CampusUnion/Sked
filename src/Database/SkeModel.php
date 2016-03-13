@@ -58,10 +58,12 @@ abstract class SkeModel {
         $strDateEnd = date('Y-m-d H:i:s', strtotime($strDateStart . ' + 1 day - 1 second'));
 
         // Get results and sort by time
-        return usort($this->query($strDateStart, $strDateEnd, $iMemberId), function($aResult1, $aResult2) {
+        $aResults = $this->query($strDateStart, $strDateEnd, $iMemberId);
+        usort($aResults, function($aResult1, $aResult2) {
             return $aResult1['session_at'] <=> $aResult2['session_at']
                 ?: $aResult1['starts_at'] <=> $aResult2['starts_at'];
         });
+        return $aResults;
     }
 
     /**
