@@ -17,7 +17,7 @@ class SkeForm {
     protected $strAction;
 
     /** @var string $strBeforeInput HTML code to print before each input. */
-    protected $strBeforeInput = '<p>';
+    protected $strBeforeInput = '<p class="sked-input-wrapper">';
 
     /** @var string $strAfterInput HTML code to print after each input. */
     protected $strAfterInput = '</p>';
@@ -75,8 +75,8 @@ class SkeForm {
     public function setAfterInput($mAfterInput)
     {
         if (is_array($mAfterInput)) {
-            $strAfterInput = $mAfterInput['beforeInput'] ?? null;
-            unset($mAfterInput['beforeInput']);
+            $strAfterInput = $mAfterInput['afterInput'] ?? null;
+            unset($mAfterInput['afterInput']);
         } else {
             $strAfterInput = $mAfterInput;
         }
@@ -170,6 +170,8 @@ class SkeForm {
         return [
             'id' => [
                 'type' => 'hidden',
+                'has_follower' => true,
+                'is_follower' => true,
             ],
             'label' => [
                 'attribs' => [
@@ -203,6 +205,7 @@ class SkeForm {
                 'options' => ['' => '-'] + range(1, 31),
                 'attribs' => [
                     'label' => 'Repeat every',
+                    'has_follower' => true,
                 //     'disabled' => true,
                 ],
             ],
@@ -214,10 +217,10 @@ class SkeForm {
                     SkeVent::INTERVAL_WEEKLY => 'week',
                     SkeVent::INTERVAL_MONTHLY => 'month',
                 ],
-                // 'attribs' => [
-                //     'id' => 'interval',
+                'attribs' => [
+                    'is_follower' => true,
                 //     'disabled' => true,
-                // ],
+                ],
             ],
             'weekdays' => [
                 'type' => 'checkbox',
@@ -279,10 +282,8 @@ class SkeForm {
             if ('ends_at' === $oInput->getName())
                 $strHtml .= '<h3>For repeating events only</h3>';
 
-            // Preceding HTML except:
-            // - The "interval" field must immediately follow the "frequency" field.
-            // - The "id" field is hidden.
-            if (!in_array($oInput->getName(), ['interval', 'id']))
+            // Preceding HTML
+            if (!$oInput->isFollower())
                 $strHtml .= $this->strBeforeInput;
 
             // Errors
@@ -292,10 +293,8 @@ class SkeForm {
             // The input
             $strHtml .= $oInput;
 
-            // Succeeding HTML except:
-            // - The "frequency" field is immediately followed by the "interval" field.
-            // - The "id" field is hidden.
-            if (!in_array($oInput->getName(), ['frequency', 'id']))
+            // Succeeding HTML
+            if (!$oInput->hasFollower())
                 $strHtml .= $this->strAfterInput;
         }
 

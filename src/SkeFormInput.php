@@ -10,6 +10,12 @@ class SkeFormInput {
     /** @var array $aOptions Array of input options. */
     protected $aOptions;
 
+    /** @var bool $bHasFollower Is there an input that immediately follows this one? */
+    protected $bHasFollower = false;
+
+    /** @var bool $bHasFollower Does this input immediately follow another? */
+    protected $bIsFollower = false;
+
     /** @var bool $bMulti Is this a multi-element input? */
     protected $bMulti = false;
 
@@ -50,6 +56,15 @@ class SkeFormInput {
             $this->bMulti = $aAttribs['multi'];
             unset($aAttribs['multi']);
         }
+        if (isset($aAttribs['has_follower'])) {
+            $this->bHasFollower = (bool)$aAttribs['has_follower'];
+            unset($aAttribs['has_follower']);
+        }
+        if (isset($aAttribs['is_follower'])) {
+            $this->bIsFollower = (bool)$aAttribs['is_follower'];
+            unset($aAttribs['is_follower']);
+        }
+
         $this->aAttribs += ['id' => $strName] + $aAttribs;
         if (!empty($aOptions))
             $this->aOptions = $aOptions;
@@ -129,13 +144,55 @@ class SkeFormInput {
     }
 
     /**
+     * Is there an input that immediately follows this one?
+     *
+     * @return bool
+     */
+    public function hasFollower()
+    {
+        return $this->bHasFollower;
+    }
+
+    /**
+     * Does this input immediately follow another?
+     *
+     * @return bool
+     */
+    public function isFollower()
+    {
+        return $this->bIsFollower;
+    }
+
+    /**
+     * Is this a multi-checkbox/multi-radio field?
+     *
+     * @return bool
+     */
+    public function isMulti()
+    {
+        return $this->bMulti;
+    }
+
+    /**
      * Render the element.
      *
      * @return string HTML
      */
     public function __toString()
     {
-        return $this->renderLabel() . ' ' . ($this->bMulti ? $this->renderMulti() : $this->renderSingle());
+        return $this->renderLabel() . ' ' . $this->renderInput();
+    }
+
+    /**
+     * Render the input element.
+     *
+     * @param array $aAttribs Array of element attributes.
+     * @return string HTML
+     */
+    public function renderInput(array $aAttribs = [])
+    {
+        $this->aAttribs += $aAttribs;
+        return $this->isMulti() ? $this->renderMulti() : $this->renderSingle();
     }
 
     /**
@@ -158,13 +215,13 @@ class SkeFormInput {
                 $strSelected = isset($this->mValue) && $this->mValue === (string)$mValue
                     ? ' selected' : '';
                 $strHtml .= '<option value="' . $mValue . '"' . $strSelected . '>'
-                    . $strLabel . '</>';
+                    . $strLabel . '</option>';
             }
         }
 
         // Optional - Build closing tag
         if ('input' !== $this->strElementType)
-            $strHtml .= '<' . $this->strElementType . '>';
+            $strHtml .= '</' . $this->strElementType . '>';
 
         return $strHtml;
     }
@@ -185,8 +242,9 @@ class SkeFormInput {
                 $mValue = $strLabel;
             $strSelected = isset($this->mValue) && in_array($strLabel, $this->mValue)
                 ? ' checked' : '';
-            $strHtml .= '<input value="' . $mValue . '" ' . $this->renderAttribs()
-                . $strSelected . '>' . $strLabel;
+            $strHtml .= '<label class="sked-input-multi">'
+                . '<input value="' . $mValue . '" ' . $this->renderAttribs() . $strSelected . '> '
+                . $strLabel . '</label>';
         }
 
         return $strHtml;
@@ -220,7 +278,7 @@ class SkeFormInput {
      *
      * @return string HTML
      */
-    protected function renderLabel()
+    public function renderLabel()
     {
         return $this->strLabel ? '<label>' . $this->strLabel . '</label>' : '';
     }
