@@ -4,8 +4,6 @@ namespace CampusUnion\Sked;
 
 class Sked {
 
-    use ValidatesDates;
-
     /** @var CampusUnion\Sked\Database\SkeModel Data layer. */
     protected $oModel;
 
@@ -29,15 +27,37 @@ class Sked {
     /**
      * Get dates iterator.
      *
-     * @param string $strStartDate
-     * @param string $strEndDate
+     * @param string $strStart Start date YYYY-MM-DD.
+     * @param string|true $mEnd End date YYYY-MM-DD, or "true" to return one full month.
      * @return CampusUnion\Sked\SkeDateIterator
      */
-    public function skeDates(string $strStartDate = null, string $strEndDate = null)
+    public function skeDates(string $strStartDate = null, $mEndDate = null)
     {
-        $this->validateDate($strStartDate);
-        $this->validateDate($strEndDate);
-        return new SkeDateIterator($this->oModel, $strStartDate, $strEndDate);
+        return new SkeDateIterator($this->oModel, $strStartDate, $mEndDate);
+    }
+
+    /**
+     * Shortcut for skeDates(). If you use this, you're boring.
+     *
+     * @param string $strStart Start date YYYY-MM-DD.
+     * @param string|true $mEnd End date YYYY-MM-DD, or "true" to return one full month.
+     * @return CampusUnion\Sked\SkeDateIterator
+     */
+    public function dates(string $strStartDate, $mEndDate = null)
+    {
+        return $this->skeDates($strStartDate, $mEndDate);
+    }
+
+    /**
+     * Get the HTML form.
+     *
+     * @param array $aOptions Optional array of config options.
+     * @param array|CampusUnion\Sked\SkeVent $skeVent Event object for populating form defaults.
+     * @return CampusUnion\Sked\SkeForm
+     */
+    public function form(array $aOptions = [], $skeVent = null)
+    {
+        return new SkeForm($aOptions, $skeVent);
     }
 
     /**
@@ -54,30 +74,6 @@ class Sked {
             $skeVent->id = $iId;
 
         return !!$iId;
-    }
-
-    /**
-     * Shortcut for skeDates(). If you use this, you're boring.
-     *
-     * @param string $strStartDate
-     * @param string $strEndDate
-     * @return CampusUnion\Sked\SkeDateIterator
-     */
-    public function dates(string $strStartDate, string $strEndDate = null)
-    {
-        return $this->skeDates($strStartDate, $strEndDate);
-    }
-
-    /**
-     * Get the HTML form.
-     *
-     * @param array $aOptions Optional array of config options.
-     * @param array|CampusUnion\Sked\SkeVent $skeVent Event object for populating form defaults.
-     * @return CampusUnion\Sked\SkeForm
-     */
-    public function form(array $aOptions = [], $skeVent = null)
-    {
-        return new SkeForm($aOptions, $skeVent);
     }
 
     /**

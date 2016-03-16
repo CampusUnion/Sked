@@ -6,6 +6,9 @@ class SkeDateIterator implements \Iterator {
 
     use ValidatesDates;
 
+    /** @var int Limit number of days to iterate to 10 years. */
+    const MAX_DATES = 365 * 10;
+
     /** @var \CampusUnion\Sked\Database\SkeModel $oModel Data layer. */
     protected $oModel;
 
@@ -14,6 +17,9 @@ class SkeDateIterator implements \Iterator {
 
     /** @var string $strEnd End date YYYY-MM-DD. */
     protected $strEnd;
+
+    /** @var bool $bOneFullMonth Are we returning one full month? */
+    protected $bOneFullMonth = false;
 
     /** @var int $iCurrentKey Current iteration key. */
     private $iCurrentKey;
@@ -26,16 +32,36 @@ class SkeDateIterator implements \Iterator {
      *
      * @param \CampusUnion\Sked\Database\SkeModel $oModel Data layer.
      * @param string $strStart Start date YYYY-MM-DD.
-     * @param string $strEnd End date YYYY-MM-DD.
+     * @param string|true $mEnd End date YYYY-MM-DD, or "true" to return one full month.
      */
-    public function __construct(Database\SkeModel $oModel, string $strStart = null, string $strEnd = null)
+    public function __construct(Database\SkeModel $oModel, string $strStart = null, $mEnd = null)
     {
-        $this->validateDate($strStart);
-        $this->validateDate($strEnd);
-
         $this->oModel = $oModel;
+
+        $this->validateDate($strStart);
         $this->strStart = $strStart ?: date('Y-m-d');
-        $this->strEnd = $strEnd;
+
+        // When end date is "true," it means return one full month.
+        if (true === $mEnd) {
+            $iStartTime = strtotime($this->strStart);
+            $this->strStart = date('Y-m-01', $iStartTime);
+            $this->strEnd = date('Y-m-t', $iStartTime);
+            $this->bOneFullMonth = true;
+        } else {
+            $this->validateDate($mEnd);
+            $this->strEnd = $mEnd;
+        }
+    }
+
+    /** @return int Number of dates in the range. */
+    public function count()
+    {
+        return $this->strEnd
+            ? (int) round(
+                (strtotime($this->strEnd) - strtotime($this->strStart))
+                / (24 * 60 * 60)
+            ) + 1 // inclusive
+            : self::MAX_DATES;
     }
 
     /** @return SkeDate Get current iteration. */
@@ -69,7 +95,65 @@ class SkeDateIterator implements \Iterator {
     {
         return $this->strCurrentValue >= $this->strStart
             && (is_null($this->strEnd) || $this->strCurrentValue <= $this->strEnd)
-            && $this->iCurrentKey <= 365 * 10; // 10-yr limit to prevent it from going on forever
+            && $this->iCurrentKey <= self::MAX_DATES;
+    }
+
+    /**
+     * Render the set of dates as a calendar.
+     *
+     * @return string HTML
+     */
+    public function __toString()
+    {
+        // Can this set of dates be rendered?
+        if (!$this->bOneFullMonth) {
+            throw new \Exception(
+                __METHOD__ . ' - Only one full month can be rendered (end date must be "true").'
+            );
+        }
+
+        $i = 0;
+        $strHtml = '<table class="sked-cal"><tr>';
+
+        for ($j = 0; $j < $this->monthPadDates(); $j++) {
+            $i++;
+            $strHtml .= '<td></td>';
+        }
+
+        foreach ($this as $skeDate) {
+            $i++;
+            $strHtml .= '<td class="sked-cal-date">';
+                $strHtml .= '<span class="sked-cal-date-num">' . $skeDate->format('j') . '</span>';
+                $strHtml .= '<ul class="sked-cal-date-list">';
+                foreach ($skeDate->skeVents() as $skeVent) {
+                    $strHtml .= '<li class="sked-cal-date-event">'
+                        . $skeVent->label
+                        . '<span>' . $skeVent->time() . '</span>'
+                        . '</li>';
+                }
+                $strHtml .= '<ul>';
+            $strHtml .= '</td>';
+            if (7 === $i) {
+                $i = 0;
+                $strHtml .= '</tr><tr>';
+            }
+        }
+
+        for ($j = $i; $j < 7; $j++) {
+            $strHtml .= '<td></td>';
+        }
+
+        return $strHtml . '</tr></table>';
+    }
+
+    /**
+     * Get number of padding dates needed at the beginning of the month's calendar view.
+     *
+     * @return int
+     */
+    public function monthPadDates()
+    {
+        return date('w', strtotime(date('Y-m-01', strtotime($this->strStart))));
     }
 
 }
