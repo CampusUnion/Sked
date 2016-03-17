@@ -144,6 +144,16 @@ class SkeFormInput {
     }
 
     /**
+     * Is this a date/time field?
+     *
+     * @return bool
+     */
+    public function isDateField()
+    {
+        return in_array($this->getName(), ['starts_at', 'ends_at']);
+    }
+
+    /**
      * Is there an input that immediately follows this one?
      *
      * @return bool
