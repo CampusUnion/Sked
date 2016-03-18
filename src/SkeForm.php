@@ -170,8 +170,10 @@ class SkeForm {
         return [
             'id' => [
                 'type' => 'hidden',
-                'has_follower' => true,
-                'is_follower' => true,
+                'attribs' => [
+                    'has_follower' => true,
+                    'is_follower' => true,
+                ],
             ],
             'label' => [
                 'attribs' => [

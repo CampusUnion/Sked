@@ -49,6 +49,17 @@ class Sked {
     }
 
     /**
+     * Retrieve an event from the database.
+     *
+     * @param int $iId
+     * @return SkeVent
+     */
+    public function findEvent(int $iId)
+    {
+        return new SkeVent($this->oModel->find($iId));
+    }
+
+    /**
      * Get the HTML form.
      *
      * @param array $aOptions Optional array of config options.

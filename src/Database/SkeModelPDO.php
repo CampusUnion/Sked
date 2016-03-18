@@ -16,6 +16,20 @@ class SkeModelPDO extends SkeModel {
     }
 
     /**
+     * Retrieve an event from the database.
+     *
+     * @param int $iId
+     * @return array
+     */
+    public function find(int $iId)
+    {
+        $oSelect = $this->oConnector->prepare('SELECT * FROM sked_events WHERE id = :id');
+        if (!$oSelect->execute([':id' => $iId]))
+            throw new \Exception(__METHOD__ . ' - ' . $oSelect->errorInfo()[2]);
+        return $oSelect->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Build the events query.
      *
      * @param string $strDateStart Datetime that today starts.

@@ -20,6 +20,14 @@ abstract class SkeModel {
     abstract public function __construct(array $aOptions);
 
     /**
+     * Retrieve an event from the database.
+     *
+     * @param int $iId
+     * @return array
+     */
+    abstract public function find(int $iId);
+
+    /**
      * Build the events query.
      *
      * @param string $strDateStart Datetime that today starts.
