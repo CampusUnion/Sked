@@ -15,6 +15,24 @@ class SkeModelPDO extends SkeModel {
         $this->oConnector = new \PDO($strDsn, $aOptions['user'], $aOptions['pass']);
     }
 
+    /** @return bool Begin a database transaction. */
+    protected function beginTransaction()
+    {
+        return $this->oConnector->beginTransaction();
+    }
+
+    /** @return bool Commit a database transaction. */
+    protected function commitTransaction()
+    {
+        return $this->oConnector->commit();
+    }
+
+    /** @return bool Roll back a database transaction. */
+    protected function rollBackTransaction()
+    {
+        return $this->oConnector->rollBack();
+    }
+
     /**
      * Retrieve an event from the database.
      *
@@ -125,7 +143,8 @@ class SkeModelPDO extends SkeModel {
      * Persist event data to the database.
      *
      * @param array $aData Array of data to persist.
-     * @return int|bool Success/failure.
+     * @return int true On success.
+     * @throws \Exception On failure.
      */
     protected function saveEvent(array $aData)
     {
@@ -158,6 +177,41 @@ class SkeModelPDO extends SkeModel {
             throw new \Exception($oStmt->errorInfo()[2]);
         else
             return $aExecParams[':id_value'] ?? $this->oConnector->lastInsertId();
+    }
+
+    /**
+     * Persist event tag data to the database.
+     *
+     * @param int $iEventId Event that owns the tags.
+     * @param array $aTags Array of data to persist.
+     * @return bool true On success.
+     * @throws \Exception On failure.
+     */
+    protected function saveEventTags(int $iEventId, array $aTags)
+    {
+        // Delete existing tags
+        $oStmt = $this->oConnector->prepare('DELETE FROM `sked_event_tags` WHERE `sked_event_id` = ?');
+        if (!$oStmt->execute([$iEventId]))
+            throw new \Exception($oStmt->errorInfo()[2]);
+
+        // Create new tags
+        $aValueSets = [];
+        $aExecParams[':sked_event_id'] = $iEventId;
+        $strQuery = 'INSERT INTO `sked_event_tags` (`sked_event_id`, `tag_id`, `value`, `created_at`) VALUES ';
+        foreach ($aTags as $iTagId => $mTagValue) {
+            $strTagParam = ':tag_id_' . $iTagId;
+            $strValueParam = ':value_' . $iTagId;
+            $aValueSets[] = '(:sked_event_id, ' . $strTagParam . ', ' . $strValueParam . ', NOW())';
+            $aExecParams[$strTagParam] = $iTagId;
+            $aExecParams[$strValueParam] = $mTagValue;
+        }
+        $strQuery .= implode(',', $aValueSets);
+
+        $oStmt = $this->oConnector->prepare($strQuery);
+        if (!$oStmt->execute($aExecParams))
+            throw new \Exception($oStmt->errorInfo()[2]);
+        else
+            return true;
     }
 
 }

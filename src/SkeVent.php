@@ -68,6 +68,16 @@ class SkeVent {
     }
 
     /**
+     * Get all error messages.
+     *
+     * @return array|false
+     */
+    public function getErrors()
+    {
+        return !empty($this->aErrors) ? $this->aErrors : false;
+    }
+
+    /**
      * Check for error message by field name.
      *
      * @param string $strKey Name of the form field.
@@ -163,7 +173,7 @@ class SkeVent {
         // Sanitize
         $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
             return !empty($mValue) && '-' !== $mValue && (
-                'created_at' === $strKey || 'updated_at' === $strKey
+                'tags' === $strKey || 'created_at' === $strKey || 'updated_at' === $strKey
                 || in_array($strKey, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
                 || array_key_exists($strKey, SkeForm::getFieldDefinitions())
             );

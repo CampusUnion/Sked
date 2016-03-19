@@ -12,7 +12,7 @@ CREATE TABLE `sked_events` (
     `Sat` TINYINT(1) DEFAULT 0,
     `Sun` TINYINT(1) DEFAULT 0,
     `interval` VARCHAR(7) DEFAULT 'Once' COMMENT 'Options are "Once", "1" (daily), "7" (weekly), and "Monthly"',
-    `frequency` TINYINT DEFAULT 1 COMMENT 'Number of intervals between events (1 is every, 2 is every-other, etc.)',
+    `frequency` TINYINT DEFAULT NULL COMMENT 'Number of intervals between events (1 is every, 2 is every-other, etc.)',
     `ends_at` DATETIME DEFAULT NULL COMMENT 'Last event in the series (NOT the ending time of the first event). NULL if once or indefinite',
     `created_at` DATETIME NOT NULL,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -36,6 +36,26 @@ abstract class SkeModel {
      */
     abstract protected function query(string $strDateStart, string $strDateEnd, int $iMemberId = null);
 
+    /** @return bool Begin a database transaction. */
+    abstract protected function beginTransaction();
+
+    /** @return bool Commit a database transaction. */
+    abstract protected function commitTransaction();
+
+    /** @return bool Roll back a database transaction. */
+    abstract protected function rollBackTransaction();
+
+    /**
+     * End a database transaction.
+     *
+     * @param bool $bSuccess Did the queries within the transaction succeed?
+     * @return bool
+     */
+    protected function endTransaction(bool $bSuccess)
+    {
+        return $bSuccess ? $this->commitTransaction() : $this->rollBackTransaction();
+    }
+
     /**
      * Persist event data to the database.
      *
@@ -43,6 +63,15 @@ abstract class SkeModel {
      * @return int|bool Success/failure.
      */
     abstract protected function saveEvent(array $aData);
+
+    /**
+     * Persist event tag data to the database.
+     *
+     * @param int $iEventId Event that owns the tags.
+     * @param array $aTags Array of data to persist.
+     * @return bool Success/failure.
+     */
+    abstract protected function saveEventTags(int $iEventId, array $aTags);
 
     /**
      * Fetch event sessions from the database.
@@ -82,7 +111,29 @@ abstract class SkeModel {
      */
     public function save(SkeVent &$skeVent)
     {
-        return $this->validateEvent($skeVent) ? $this->saveEvent($skeVent->toArray()) : false;
+        $mReturn = false;
+
+        // Validate
+        if ($this->validateEvent($skeVent)) {
+            $aValues = $skeVent->toArray();
+            $aTags = $aValues['tags'] ?? [];
+            unset($aValues['tags']);
+
+            // Run transaction
+            $this->beginTransaction();
+            try {
+                $mReturn = $this->saveEvent($aValues);
+                if (!empty($aTags))
+                    $this->saveEventTags($mReturn, $aTags);
+                $this->endTransaction((bool)$mReturn);
+            } catch (\Exception $e) {
+                $mReturn = false;
+                $this->endTransaction(false);
+                $skeVent->addError(2, $e->getMessage());
+            }
+        }
+
+        return $mReturn;
     }
 
     /**

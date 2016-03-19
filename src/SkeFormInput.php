@@ -222,7 +222,7 @@ class SkeFormInput {
             foreach ($this->aOptions as $mValue => $strLabel) {
                 if ($bLabelIsValue)
                     $mValue = $strLabel;
-                $strSelected = isset($this->mValue) && $this->mValue === (string)$mValue
+                $strSelected = isset($this->mValue) && (string)$this->mValue === (string)$mValue
                     ? ' selected' : '';
                 $strHtml .= '<option value="' . $mValue . '"' . $strSelected . '>'
                     . $strLabel . '</option>';
@@ -250,7 +250,7 @@ class SkeFormInput {
         foreach ($this->aOptions as $mValue => $strLabel) {
             if ($bLabelIsValue)
                 $mValue = $strLabel;
-            $strSelected = isset($this->mValue) && in_array($strLabel, $this->mValue)
+            $strSelected = isset($this->mValue) && in_array($strLabel, (array)$this->mValue)
                 ? ' checked' : '';
             $strHtml .= '<label class="sked-input-multi">'
                 . '<input value="' . $mValue . '" ' . $this->renderAttribs() . $strSelected . '> '
