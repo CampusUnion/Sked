@@ -136,7 +136,7 @@ class SkeModelPDO extends SkeModel {
         ];
         if (!$oSelect->execute($aParams))
             throw new \Exception(__METHOD__ . ' - ' . $oSelect->errorInfo()[2]);
-        return $oSelect->fetchAll();
+        return $oSelect->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -180,6 +180,20 @@ class SkeModelPDO extends SkeModel {
     }
 
     /**
+     * Fetch sked_event_tags from the database.
+     *
+     * @param int $iEventId
+     * @return array
+     */
+    public function fetchEventTags(int $iEventId)
+    {
+        $oSelect = $this->oConnector->prepare('SELECT * FROM `sked_event_tags` WHERE `sked_event_id` = ?');
+        if (!$oSelect->execute([$iEventId]))
+            throw new \Exception($oSelect->errorInfo()[2]);
+        return $oSelect->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Persist event tag data to the database.
      *
      * @param int $iEventId Event that owns the tags.
@@ -195,23 +209,25 @@ class SkeModelPDO extends SkeModel {
             throw new \Exception($oStmt->errorInfo()[2]);
 
         // Create new tags
-        $aValueSets = [];
-        $aExecParams[':sked_event_id'] = $iEventId;
-        $strQuery = 'INSERT INTO `sked_event_tags` (`sked_event_id`, `tag_id`, `value`, `created_at`) VALUES ';
-        foreach ($aTags as $iTagId => $mTagValue) {
-            $strTagParam = ':tag_id_' . $iTagId;
-            $strValueParam = ':value_' . $iTagId;
-            $aValueSets[] = '(:sked_event_id, ' . $strTagParam . ', ' . $strValueParam . ', NOW())';
-            $aExecParams[$strTagParam] = $iTagId;
-            $aExecParams[$strValueParam] = $mTagValue;
-        }
-        $strQuery .= implode(',', $aValueSets);
+        if (!empty($aTags)) {
+            $aValueSets = [];
+            $aExecParams[':sked_event_id'] = $iEventId;
+            $strQuery = 'INSERT INTO `sked_event_tags` (`sked_event_id`, `tag_id`, `value`, `created_at`) VALUES ';
+            foreach ($aTags as $iTagId => $mTagValue) {
+                $strTagParam = ':tag_id_' . $iTagId;
+                $strValueParam = ':value_' . $iTagId;
+                $aValueSets[] = '(:sked_event_id, ' . $strTagParam . ', ' . $strValueParam . ', NOW())';
+                $aExecParams[$strTagParam] = $iTagId;
+                $aExecParams[$strValueParam] = $mTagValue;
+            }
+            $strQuery .= implode(',', $aValueSets);
 
-        $oStmt = $this->oConnector->prepare($strQuery);
-        if (!$oStmt->execute($aExecParams))
-            throw new \Exception($oStmt->errorInfo()[2]);
-        else
-            return true;
+            $oStmt = $this->oConnector->prepare($strQuery);
+            if (!$oStmt->execute($aExecParams))
+                throw new \Exception($oStmt->errorInfo()[2]);
+        }
+
+        return true;
     }
 
 }

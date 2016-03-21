@@ -65,6 +65,14 @@ abstract class SkeModel {
     abstract protected function saveEvent(array $aData);
 
     /**
+     * Fetch sked_event_tags from the database.
+     *
+     * @param int $iEventId
+     * @return array
+     */
+    abstract public function fetchEventTags(int $iEventId);
+
+    /**
      * Persist event tag data to the database.
      *
      * @param int $iEventId Event that owns the tags.
@@ -115,16 +123,13 @@ abstract class SkeModel {
 
         // Validate
         if ($this->validateEvent($skeVent)) {
-            $aValues = $skeVent->toArray();
-            $aTags = $aValues['tags'] ?? [];
-            unset($aValues['tags']);
+            $aValues = $skeVent->toArray(false);
 
             // Run transaction
             $this->beginTransaction();
             try {
                 $mReturn = $this->saveEvent($aValues);
-                if (!empty($aTags))
-                    $this->saveEventTags($mReturn, $aTags);
+                $this->saveEventTags($mReturn, $skeVent->getTags());
                 $this->endTransaction((bool)$mReturn);
             } catch (\Exception $e) {
                 $mReturn = false;

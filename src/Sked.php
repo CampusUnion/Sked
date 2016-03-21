@@ -5,7 +5,7 @@ namespace CampusUnion\Sked;
 class Sked {
 
     /** @var CampusUnion\Sked\Database\SkeModel Data layer. */
-    protected $oModel;
+    protected static $oModel;
 
     /**
      * Init Sked.
@@ -21,7 +21,7 @@ class Sked {
             throw new Exception('Must pass an array of data_connector[options] to ' . __METHOD__);
 
         $strModelClass = 'CampusUnion\Sked\Database\SkeModel' . ucfirst($aOptions['data_connector']['name']);
-        $this->oModel = new $strModelClass($aOptions['data_connector']['options']);
+        static::$oModel = new $strModelClass($aOptions['data_connector']['options']);
     }
 
     /**
@@ -33,7 +33,7 @@ class Sked {
      */
     public function skeDates(string $strStartDate = null, $mEndDate = null)
     {
-        return new SkeDateIterator($this->oModel, $strStartDate, $mEndDate);
+        return new SkeDateIterator(static::$oModel, $strStartDate, $mEndDate);
     }
 
     /**
@@ -56,7 +56,7 @@ class Sked {
      */
     public function findEvent(int $iId)
     {
-        return new SkeVent($this->oModel->find($iId));
+        return new SkeVent(static::$oModel->find($iId));
     }
 
     /**
@@ -72,6 +72,17 @@ class Sked {
     }
 
     /**
+     * Fetch sked_event_tags from the database.
+     *
+     * @param int $iEventId
+     * @return array
+     */
+    public static function getEventTags(int $iEventId)
+    {
+        return static::$oModel->fetchEventTags($iEventId);
+    }
+
+    /**
      * Persist event data to the database.
      *
      * Updates the ID of the original event object.
@@ -81,7 +92,7 @@ class Sked {
      */
     public function save(SkeVent &$skeVent)
     {
-        if ($iId = $this->oModel->save($skeVent))
+        if ($iId = static::$oModel->save($skeVent))
             $skeVent->id = $iId;
 
         return !!$iId;

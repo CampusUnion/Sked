@@ -20,7 +20,10 @@ class SkeVent {
     protected $aErrors = [];
 
     /** @var array $aProperties Array of properties retrieved from the database. */
-    protected $aProperties;
+    protected $aProperties = [];
+
+    /** @var array $aTags Array of sked_event_tags. */
+    protected $aTags = null; // null shows we haven't checked DB yet
 
     /**
      * Init the event object.
@@ -34,6 +37,12 @@ class SkeVent {
             foreach ((array)$aProperties['weekdays'] as $strDay)
                 $aProperties[$strDay] = 1;
             unset($aProperties['weekdays']);
+        }
+
+        // Process tags
+        if (isset($aProperties['tags'])) {
+            $this->setTags($aProperties['tags']);
+            unset($aProperties['tags']);
         }
 
         // Set defaults
@@ -149,6 +158,44 @@ class SkeVent {
     }
 
     /**
+     * Get associated sked_event_tags.
+     *
+     * @return array
+     */
+    public function getTags()
+    {
+        if (!is_array($this->aTags) && $this->id) {
+            $this->aTags = [];
+            foreach (Sked::getEventTags($this->id) as $aEventTag)
+                $this->aTags[$aEventTag['tag_id']] = new SkeVentTag($aEventTag);
+        }
+        return (array)$this->aTags;
+    }
+
+    /**
+     * Set associated sked_event_tags.
+     *
+     * @param array $aEventTags Array of SkeVentTag objects.
+     * @return $this
+     */
+    public function setTags(array $aEventTags)
+    {
+        $this->aTags = [];
+        foreach ($aEventTags as $iTagId => $skeVentTag) {
+
+            if (!$skeVentTag instanceof SkeVentTag) {
+                $skeVentTag = new SkeVentTag([
+                    'tag_id' => $iTagId,
+                    'value' => $skeVentTag,
+                ]);
+            }
+
+            $this->aTags[$skeVentTag->tag_id] = $skeVentTag;
+        }
+        return $this;
+    }
+
+    /**
      * Format the time using the given pattern.
      *
      * @param string $strFormat PHP date format.
@@ -166,14 +213,15 @@ class SkeVent {
     /**
      * Convert to an array of database properties.
      *
+     * @param bool $bIncludeTags Should tags be included?
      * @return array
      */
-    public function toArray()
+    public function toArray(bool $bIncludeTags = true)
     {
         // Sanitize
         $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
             return !empty($mValue) && '-' !== $mValue && (
-                'tags' === $strKey || 'created_at' === $strKey || 'updated_at' === $strKey
+                'created_at' === $strKey || 'updated_at' === $strKey
                 || in_array($strKey, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
                 || array_key_exists($strKey, SkeForm::getFieldDefinitions())
             );
@@ -182,6 +230,10 @@ class SkeVent {
             $aReturn['starts_at'] = date('Y-m-d H:i:s', strtotime($aReturn['starts_at']));
         if (isset($aReturn['ends_at']))
             $aReturn['ends_at'] = date('Y-m-d H:i:s', strtotime($aReturn['ends_at']));
+
+        // Include tags?
+        if ($bIncludeTags)
+            $aReturn['tags'] = $this->getTags();
 
         return $aReturn;
     }
