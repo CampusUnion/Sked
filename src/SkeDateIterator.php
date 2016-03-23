@@ -140,8 +140,10 @@ class SkeDateIterator implements \Iterator {
             }
         }
 
-        for ($j = $i; $j < 7; $j++) {
-            $strHtml .= '<td></td>';
+        if ($i) {
+            for ($j = $i; $j < 7; $j++) {
+                $strHtml .= '<td></td>';
+            }
         }
 
         return $strHtml . '</tr></table>';

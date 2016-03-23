@@ -151,7 +151,7 @@ class SkeForm {
     /** @return array List of form fields. */
     public static function getFieldDefinitions()
     {
-        // Set up options for 'duration'
+        // Set up options for 'duration' field
         $aDurationOptions = [];
         foreach (range(15, 6 * 60, 15) as $iOption) {
             $strLabel = '';
@@ -185,7 +185,6 @@ class SkeForm {
             'starts_at' => [
                 'attribs' => [
                     'label' => 'Starts At',
-                //     'class' => 'datetime-picker',
                 ],
                 'required' => true,
             ],
@@ -199,7 +198,6 @@ class SkeForm {
             'ends_at' => [
                 'attribs' => [
                     'label' => 'Repeat Until',
-                //     'class' => 'datetimepicker',
                 ],
             ],
             'frequency' => [
@@ -208,7 +206,6 @@ class SkeForm {
                 'attribs' => [
                     'label' => 'Repeat every',
                     'has_follower' => true,
-                //     'disabled' => true,
                 ],
             ],
             'interval' => [
@@ -221,7 +218,6 @@ class SkeForm {
                 ],
                 'attribs' => [
                     'is_follower' => true,
-                //     'disabled' => true,
                 ],
             ],
             'weekdays' => [
@@ -230,7 +226,6 @@ class SkeForm {
                 'attribs' => [
                     'label' => 'On',
                     'multi' => true,
-                //     'class' => $strCheckFieldType . '-inline weekday'
                 ],
             ],
         ];
