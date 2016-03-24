@@ -177,10 +177,17 @@ class SkeForm {
             ],
             'label' => [
                 'attribs' => [
-                    'label' => 'Description',
+                    'label' => 'Title',
                     'maxlength' => 255,
                 ],
                 'required' => true,
+            ],
+            'description' => [
+                'type' => 'textarea',
+                'attribs' => [
+                    'label' => 'Description',
+                    'maxlength' => 1000,
+                ],
             ],
             'starts_at' => [
                 'attribs' => [

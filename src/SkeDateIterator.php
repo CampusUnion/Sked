@@ -113,7 +113,8 @@ class SkeDateIterator implements \Iterator {
         }
 
         $i = 0;
-        $strHtml = '<table class="sked-cal"><tr>';
+        $strHtml = '<h3 class="sked-cal-title">' . date('F', strtotime($this->strStart))
+            . '</h3><table class="sked-cal"><tr>';
 
         for ($j = 0; $j < $this->monthPadDates(); $j++) {
             $i++;
