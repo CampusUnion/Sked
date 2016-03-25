@@ -34,6 +34,9 @@ class SkeFormInput {
     /** @var string $strName Name/ID of the field. */
     protected $strName;
 
+    /** @var string $strSuffix Label that goes after the element. */
+    protected $strSuffix;
+
     /**
      * Init the input object.
      *
@@ -50,6 +53,10 @@ class SkeFormInput {
         if (isset($aAttribs['label'])) {
             $this->strLabel = $aAttribs['label'];
             unset($aAttribs['label']);
+        }
+        if (isset($aAttribs['suffix'])) {
+            $this->strSuffix = $aAttribs['suffix'];
+            unset($aAttribs['suffix']);
         }
         if (isset($aAttribs['multi'])) {
             $this->strName .= '[]';
@@ -202,7 +209,9 @@ class SkeFormInput {
     public function renderInput(array $aAttribs = [])
     {
         $this->aAttribs += $aAttribs;
-        return $this->isMulti() ? $this->renderMulti() : $this->renderSingle();
+        $strElement = $this->isMulti() ? $this->renderMulti() : $this->renderSingle();
+        $strSuffix = $this->strSuffix ? ' ' . $this->strSuffix : '';
+        return $strElement . $strSuffix;
     }
 
     /**

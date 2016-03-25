@@ -16,6 +16,9 @@ class SkeVent {
     /** @var string INTERVAL_MONTHLY */
     const INTERVAL_MONTHLY = 'Monthly';
 
+    /** @var array WEEKDAYS */
+    const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
     /** @var array $aErrors List of validation errors. */
     protected $aErrors = [];
 
@@ -32,24 +35,12 @@ class SkeVent {
      */
     public function __construct(array $aProperties = [])
     {
-        // Parse weekday values
-        if (isset($aProperties['weekdays'])) {
-            foreach ((array)$aProperties['weekdays'] as $strDay)
-                $aProperties[$strDay] = 1;
-            unset($aProperties['weekdays']);
-        }
-
-        // Process tags
-        if (isset($aProperties['tags'])) {
-            $this->setTags($aProperties['tags']);
-            unset($aProperties['tags']);
-        }
-
         // Set defaults
         if (!isset($aProperties['created_at']))
             $aProperties['created_at'] = date('Y-m-d H:i:s');
 
-        $this->aProperties = $aProperties;
+        foreach ($aProperties as $strKey => $mValue)
+            $this->setProperty($strKey, $mValue);
     }
 
     /**
@@ -119,23 +110,6 @@ class SkeVent {
     }
 
     /**
-     * Get an event property by key.
-     *
-     * @param string $strKey The name of the property to get.
-     * @return mixed
-     */
-    public function getProperty(string $strKey)
-    {
-        if ('weekdays' === $strKey) {
-            $aReturn = array_keys(array_intersect_key(
-                $this->aProperties,
-                array_flip(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
-            ), 1);
-        }
-        return $aReturn ?? $this->aProperties[$strKey] ?? null;
-    }
-
-    /**
      * Allow magic access to event properties.
      *
      * @param string $strKey The name of the property to get.
@@ -147,6 +121,38 @@ class SkeVent {
     }
 
     /**
+     * Get an event property by key.
+     *
+     * @param string $strKey The name of the property to get.
+     * @return mixed
+     */
+    public function getProperty(string $strKey)
+    {
+        $mReturn = null;
+        switch ($strKey) {
+
+            // Parse weekday values
+            case 'weekdays':
+                $mReturn = array_keys(array_intersect_key(
+                    $this->aProperties,
+                    array_flip(self::WEEKDAYS)
+                ), 1);
+                break;
+
+            // Calculate lead time factors
+            case 'lead_time_num':
+            case 'lead_time_unit':
+                $mReturn = $this->getLeadTimeFactor($strKey);
+                break;
+
+            default:
+                $mReturn = $this->aProperties[$strKey] ?? null;
+                break;
+        }
+        return $mReturn;
+    }
+
+    /**
      * Allow magic setting of event properties.
      *
      * @param string $strKey The name of the property to set.
@@ -154,7 +160,77 @@ class SkeVent {
      */
     public function __set(string $strKey, $mValue)
     {
-        $this->aProperties[$strKey] = $mValue;
+        $this->setProperty($strKey, $mValue);
+    }
+
+    /**
+     * Set an event property by key.
+     *
+     * @param string $strKey The name of the property to set.
+     * @param mixed $mValue New value for the property.
+     */
+    public function setProperty(string $strKey, $mValue)
+    {
+        switch ($strKey) {
+
+            // Parse weekday values
+            case 'weekdays':
+                $aValues = (array)$mValue;
+                foreach (self::WEEKDAYS as $strDay)
+                    $this->setProperty($strDay, (int)in_array($strDay, $aValues));
+                break;
+
+            // Calculate lead time values
+            case 'lead_time_num':
+            case 'lead_time_unit':
+                $this->aProperties[$strKey] = $mValue;
+                if (isset($this->aProperties['lead_time_num']) && isset($this->aProperties['lead_time_unit'])) {
+                    $this->aProperties['lead_time'] =
+                        $this->aProperties['lead_time_num'] * $this->aProperties['lead_time_unit'];
+                }
+                break;
+            case 'lead_time':
+                $this->aProperties[$strKey] = $mValue;
+                $this->aProperties['lead_time_num'] = $this->getLeadTimeFactor('lead_time_num');
+                $this->aProperties['lead_time_unit'] = $this->getLeadTimeFactor('lead_time_unit');
+                break;
+
+            // Process tags
+            case 'tags':
+                $this->setTags($mValue);
+                break;
+
+            default:
+                $this->aProperties[$strKey] = $mValue;
+                break;
+        }
+    }
+
+    /**
+     * Get the "num" or "unit" factor from the lead time.
+     *
+     * @param string $strFactor "lead_time_num" or "lead_time_unit"
+     * @return int
+     */
+    protected function getLeadTimeFactor(string $strFactor)
+    {
+        $iLeadTime = (int)$this->lead_time;
+
+        // minutes
+        if ($iLeadTime < 60 || $iLeadTime % 60 !== 0) {
+            $iNum = $iLeadTime;
+            $iUnit = 1;
+        // hours
+        } elseif ($iLeadTime % (24 * 60) !== 0) {
+            $iNum = $iLeadTime/60;
+            $iUnit = 60;
+        // days
+        } else {
+            $iNum = $iLeadTime/(24*60);
+            $iUnit = 24 * 60;
+        }
+
+        return ${'i' . ucfirst(strtolower(str_replace('lead_time_', '', $strFactor)))};
     }
 
     /**
@@ -221,8 +297,8 @@ class SkeVent {
         // Sanitize
         $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
             return !empty($mValue) && '-' !== $mValue && (
-                'created_at' === $strKey || 'updated_at' === $strKey
-                || in_array($strKey, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+                in_array($strKey, ['lead_time', 'created_at', 'updated_at'])
+                || in_array($strKey, self::WEEKDAYS)
                 || array_key_exists($strKey, SkeForm::getFieldDefinitions())
             );
         }, ARRAY_FILTER_USE_BOTH);

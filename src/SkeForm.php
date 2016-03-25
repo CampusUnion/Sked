@@ -202,6 +202,27 @@ class SkeForm {
                     'label' => 'Duration',
                 ],
             ],
+            'lead_time_num' => [
+                'type' => 'select',
+                'options' => ['' => '-'] + range(1, 59),
+                'attribs' => [
+                    'label' => 'Send reminder',
+                    'has_follower' => true,
+                ],
+            ],
+            'lead_time_unit' => [
+                'type' => 'select',
+                'options' => [
+                    '' => '-',
+                    1 => 'minutes',
+                    60 => 'hours',
+                    24 * 60 => 'days',
+                ],
+                'attribs' => [
+                    'is_follower' => true,
+                    'suffix' => 'before',
+                ],
+            ],
             'ends_at' => [
                 'attribs' => [
                     'label' => 'Repeat Until',
@@ -229,7 +250,7 @@ class SkeForm {
             ],
             'weekdays' => [
                 'type' => 'checkbox',
-                'options' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                'options' => SkeVent::WEEKDAYS,
                 'attribs' => [
                     'label' => 'On',
                     'multi' => true,

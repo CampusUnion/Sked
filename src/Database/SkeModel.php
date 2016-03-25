@@ -124,6 +124,7 @@ abstract class SkeModel {
         // Validate
         if ($this->validateEvent($skeVent)) {
             $aValues = $skeVent->toArray(false);
+            unset($aValues['lead_time_num'], $aValues['lead_time_unit']);
 
             // Run transaction
             $this->beginTransaction();
