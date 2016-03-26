@@ -48,31 +48,17 @@ class SkeModelPDO extends SkeModel {
     }
 
     /**
-     * Build the events query.
+     * Build the events query for today.
      *
      * @param string $strDateStart Datetime that today starts.
      * @param string $strDateEnd Datetime that today ends.
-     * @param int $iMemberId Optional unique ID of the event participant.
+     * @return array
      */
-    protected function query(string $strDateStart, string $strDateEnd, int $iMemberId = null)
+    protected function queryDay(string $strDateStart, string $strDateEnd)
     {
-        // Begin query
-        $strQuery = 'SELECT *,
-            CONCAT_WS(
-                " ",
-                "' . substr($strDateStart, 0, 10) . '",
-                DATE_FORMAT(sked_events.starts_at, "%H:%i:%s")
-            ) AS session_at
-            FROM sked_events'; // @todo FIX session_at
-
-        // Check member
-        if ($iMemberId) {
-            $strQuery .= ' INNER JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
-                . ' AND sked_event_members.member_id = :member_id';
-        }
-
-        // Not expired
-        $strQuery .= ' WHERE (sked_events.ends_at IS NULL OR sked_events.ends_at < :date_start)';
+        $strQuery = $this->querySelectFrom($strDateStart)
+            . $this->queryJoin()
+            . $this->queryWhereNotExpired();
 
         // Happening today
         $strQuery .= ' AND (';
@@ -125,19 +111,191 @@ class SkeModelPDO extends SkeModel {
         $strQuery .= ')';
 
         // PDO
-        $oSelect = $this->oConnector->prepare($strQuery);
-        $aParams = [
-            ':member_id' => $iMemberId,
+        return $this->queryPDO($strQuery, [
+            ':member_id' => $this->iMemberId,
             ':date_start' => $strDateStart,
             ':date_start_NOTIME' => date('Y-m-d', strtotime($strDateStart)),
             ':date_start_DAYOFMONTH' => date('d', strtotime($strDateStart)),
             ':date_start_YEARMONTH' => date('Ym', strtotime($strDateStart)),
             ':date_end' => $strDateEnd,
-        ];
-        if (!$oSelect->execute($aParams))
-            throw new \Exception(__METHOD__ . ' - ' . $oSelect->errorInfo()[2]);
-        return $oSelect->fetchAll(\PDO::FETCH_ASSOC);
+        ]);
     }
+
+    /**
+     *
+     */
+    protected function queryMoment()
+    {
+        $oNow = new DateTime();
+        $strQuery = $this->querySelectFrom($oNow->format('Y-m-d H:i:s'))
+            . $this->queryJoin()
+            . $this->queryWhereNotExpired()
+            . ' AND (';
+
+            // Exact match
+            $strQuery .= 'sked_events.starts_at = "' . $this->adjustedStartTime() . '" OR (';
+
+                // Time matches
+                $strQuery .= 'SUBSTR(' . $this->adjustedStartTime() . ', 12, 5) = "' . $oNow->format('H:i') . '" AND (';
+
+                    // Daily
+                    $strQuery .= 'sked_events.interval = "1"';
+
+                    // Day of week matches for weekly events
+                    $strQuery .= ' OR (
+                        sked_events.interval = "7"
+                        AND sked_events.' . $oNow->format('D') . ' = 1
+                        AND (
+                            DATEDIFF(
+                                "' . $oNow->format('Y-m-d') . '",
+                                DATE_FORMAT(' . $this->adjustedStartTime() . ', "%Y-%m-%d")
+                            )/7
+                        ) % sked_events.frequency = 0
+                    )';
+
+                    // Monthly by day of week
+                    // Calculate how many months since first session, see if it's an exact match for today
+                    $strQuery .= ' OR (
+                        sked_events.interval = "Monthly"
+                        AND sked_events.' . $oNow->format('D') . ' = 1
+                        AND TIMESTAMPADD(
+                            MONTH,
+                            ROUND(DATEDIFF(
+                                "' . $oNow->format('Y-m-d H:i:s') . '",
+                                DATE_FORMAT(' . $this->adjustedStartTime() . ', "%Y-%m-%d")
+                            )/30),
+                            ' . $this->adjustedStartTime() . '
+                        ) = "' . $oNow->format('Y-m-d H:i:s') . '"
+                    )';
+
+                    // Monthly by date
+                    $strQuery .= ' OR (
+                        sked_events.interval = "Monthly"
+                        AND sked_events.Mon = 0
+                        AND sked_events.Tue = 0
+                        AND sked_events.Wed = 0
+                        AND sked_events.Thu = 0
+                        AND sked_events.Fri = 0
+                        AND sked_events.Sat = 0
+                        AND sked_events.Sun = 0
+                        AND DAYOFMONTH(' . $this->adjustedStartTime() . ') = "' . $oNow->format('d') . '"
+                        AND (
+                            "' . $oNow->format('Ym') . '" - EXTRACT(
+                                YEAR_MONTH FROM ' . $this->adjustedStartTime()
+                            . ')
+                        ) % sked_events.frequency = 0
+                    )';
+
+                $strQuery .= ')';
+            $strQuery .= ')';
+        $strQuery .= ')';
+
+        return $this->queryPDO($strQuery, []);
+    }
+
+    /**
+     * Helper function used in queryMoment() that considers the lead_time
+     * when appropriate.
+     *
+     * @return string SQL to represent the datetime, with or without lead_time adjustment.
+     */
+    protected function adjustedStartTime($iTime = null)
+    {
+        $strSql = $iTime
+            ? 'sked_events.starts_at - INTERVAL DAYOFWEEK(sked_events.starts_at) DAY + INTERVAL '
+                . (date('w', $iTime) + 1) . ' DAY'
+            : 'sked_events.starts_at';
+
+        if ($this->bAdjustForLeadTime)
+            $strSql = 'DATE_SUB(' . $strSql . ', INTERVAL sked_events.lead_time MINUTE)';
+
+        return $strSql;
+    }
+
+    /**
+     *
+     */
+    private function querySelectFrom(string $strDateStart)
+    {
+        return 'SELECT *,
+            CONCAT_WS(
+                " ",
+                "' . substr($strDateStart, 0, 10) . '",
+                DATE_FORMAT(sked_events.starts_at, "%H:%i:%s")
+            ) AS session_at
+            FROM sked_events'; // @todo FIX session_at
+    }
+
+    /**
+     *
+     */
+    private function queryJoin()
+    {
+        // Check member
+        return $this->iMemberId
+            ? ' INNER JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
+                . ' AND sked_event_members.member_id = :member_id'
+            : '';
+        }
+    }
+
+    /**
+     *
+     */
+    private function queryWhereNotExpired()
+    {
+        return ' WHERE (sked_events.ends_at IS NULL OR sked_events.ends_at < :date_start)';
+    }
+
+    /**
+     * Execute the query with PDO and return results.
+     *
+     * @param string $strQuery SQL query.
+     * @param array $aParams Array of parameters to bind.
+     * @return array|int|bool
+     */
+    private function queryPDO(string $strQuery, array $aParams = [])
+    {
+        $oStmt = $this->oConnector->prepare($strQuery);
+        if (!$oStmt->execute($aParams))
+            throw new \Exception(__METHOD__ . ' - ' . $oStmt->errorInfo()[2]);
+
+        list($strMethod) = explode(' ', trim($strQuery));
+        switch (strtoupper($strMethod)) {
+
+            case 'SELECT':
+                return $oStmt->fetchAll(\PDO::FETCH_ASSOC);
+                break;
+
+            case 'INSERT':
+                return $this->oConnector->lastInsertId()
+                break;
+
+            case 'UPDATE':
+                return $aParams[':id_value'];
+                break;
+
+            case 'DELETE':
+            default:
+                return true;
+                break;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Persist event data to the database.
@@ -166,17 +324,12 @@ class SkeModelPDO extends SkeModel {
             $aExecParams[$strValueParam] = $mValue;
         }
 
-        $oStmt = $this->oConnector->prepare($bUpdating
+        $strQuery = $bUpdating
             ? 'UPDATE sked_events SET ' . implode(',', $aValues)
                 . ' WHERE `id` = :id_value'
             : 'INSERT INTO sked_events (`' . implode('`,`', array_keys($aData))
-                . '`) VALUES (' . implode(',', $aValues) . ')'
-        );
-
-        if (!$oStmt->execute($aExecParams))
-            throw new \Exception($oStmt->errorInfo()[2]);
-        else
-            return $aExecParams[':id_value'] ?? $this->oConnector->lastInsertId();
+                . '`) VALUES (' . implode(',', $aValues) . ')';
+        return $this->queryPDO($strQuery, $aExecParams);
     }
 
     /**
@@ -187,10 +340,10 @@ class SkeModelPDO extends SkeModel {
      */
     public function fetchEventTags(int $iEventId)
     {
-        $oSelect = $this->oConnector->prepare('SELECT * FROM `sked_event_tags` WHERE `sked_event_id` = ?');
-        if (!$oSelect->execute([$iEventId]))
-            throw new \Exception($oSelect->errorInfo()[2]);
-        return $oSelect->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->queryPDO(
+            'SELECT * FROM `sked_event_tags` WHERE `sked_event_id` = ?',
+            [$iEventId]
+        );
     }
 
     /**
@@ -204,9 +357,10 @@ class SkeModelPDO extends SkeModel {
     protected function saveEventTags(int $iEventId, array $aTags)
     {
         // Delete existing tags
-        $oStmt = $this->oConnector->prepare('DELETE FROM `sked_event_tags` WHERE `sked_event_id` = ?');
-        if (!$oStmt->execute([$iEventId]))
-            throw new \Exception($oStmt->errorInfo()[2]);
+        $this->queryPDO(
+            'DELETE FROM `sked_event_tags` WHERE `sked_event_id` = ?',
+            [$iEventId]
+        );
 
         // Create new tags
         if (!empty($aTags)) {
@@ -222,9 +376,7 @@ class SkeModelPDO extends SkeModel {
             }
             $strQuery .= implode(',', $aValueSets);
 
-            $oStmt = $this->oConnector->prepare($strQuery);
-            if (!$oStmt->execute($aExecParams))
-                throw new \Exception($oStmt->errorInfo()[2]);
+            $this->queryPDO($strQuery, $aExecParams);
         }
 
         return true;

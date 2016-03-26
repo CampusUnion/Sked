@@ -9,6 +9,12 @@ abstract class SkeModel {
 
     use \CampusUnion\Sked\ValidatesDates;
 
+    /** @var bool $bAdjustForLeadTime Used for sending reminders ahead of time. */
+    protected $bAdjustForLeadTime = false;
+
+    /** @var int $iMemberId Whose events are we looking for? */
+    protected $iMemberId;
+
     /** @var mixed $oConnector Database connector. */
     protected $oConnector;
 
@@ -28,13 +34,13 @@ abstract class SkeModel {
     abstract public function find(int $iId);
 
     /**
-     * Build the events query.
+     * Build the events query for today.
      *
      * @param string $strDateStart Datetime that today starts.
      * @param string $strDateEnd Datetime that today ends.
-     * @param int $iMemberId Optional unique ID of the event participant.
+     * @return array
      */
-    abstract protected function query(string $strDateStart, string $strDateEnd, int $iMemberId = null);
+    abstract protected function queryDay(string $strDateStart, string $strDateEnd);
 
     /** @return bool Begin a database transaction. */
     abstract protected function beginTransaction();
@@ -82,14 +88,13 @@ abstract class SkeModel {
     abstract protected function saveEventTags(int $iEventId, array $aTags);
 
     /**
-     * Fetch event sessions from the database.
+     * Fetch today's event sessions from the database.
      *
      * @param string $strDate Date of event sessions to fetch.
-     * @param int $iMemberId Optional member ID to limit results for a single person.
      * @param int $iTimezoneOffset Optional timezone adjustment.
      * @return array
      */
-    public function fetch(string $strDate, int $iMemberId = null, int $iTimezoneOffset = 0)
+    public function fetch(string $strDate, int $iTimezoneOffset = 0)
     {
         // Filter input
         $this->validateDate($strDate);
@@ -103,12 +108,36 @@ abstract class SkeModel {
         $strDateEnd = date('Y-m-d H:i:s', strtotime($strDateStart . ' + 1 day - 1 second'));
 
         // Get results and sort by time
-        $aResults = $this->query($strDateStart, $strDateEnd, $iMemberId);
+        $aResults = $this->queryDay($strDateStart, $strDateEnd);
         usort($aResults, function($aResult1, $aResult2) {
             return $aResult1['session_at'] <=> $aResult2['session_at']
                 ?: $aResult1['starts_at'] <=> $aResult2['starts_at'];
         });
         return $aResults;
+    }
+
+    /**
+     * Fetch current event sessions from the database.
+     *
+     * @param bool $bAdjustForLeadTime Used for sending reminders ahead of time.
+     * @return array
+     */
+    public function fetchCurrent(bool $bAdjustForLeadTime = false)
+    {
+        $this->bAdjustForLeadTime = $bAdjustForLeadTime;
+        return $this->queryMoment();
+    }
+
+    /**
+     * Whose events are we looking for?
+     *
+     * @param int $iMemberId
+     * @return $this
+     */
+    public function forMember(int $iMemberId)
+    {
+        $this->iMemberId = $iMemberId;
+        return $this;
     }
 
     /**

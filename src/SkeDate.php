@@ -34,7 +34,8 @@ class SkeDate {
     public function skeVents(int $iMemberId = null)
     {
         $aReturn = [];
-        foreach ($this->oModel->fetch($this->strDate, $iMemberId) as $aEvent)
+        $this->oModel->forMember($iMemberId);
+        foreach ($this->oModel->fetch($this->strDate) as $aEvent)
             $aReturn[] = new SkeVent($aEvent);
         return $aReturn;
     }
