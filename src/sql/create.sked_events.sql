@@ -3,7 +3,6 @@ CREATE TABLE `sked_events` (
     `label` VARCHAR(255) NOT NULL COMMENT 'Label for the event',
     `description` TEXT DEFAULT NULL COMMENT 'Optional detailed description of the event',
     `starts_at` DATETIME DEFAULT NULL COMMENT 'First occurance of the event',
-    `lead_time` INT NOT NULL DEFAULT 0 COMMENT 'Number of minutes relative to starts_at to send reminder (+ is before, - is after)',
     `duration` SMALLINT DEFAULT 60 COMMENT 'Length of the event in minutes',
     `Mon` TINYINT(1) DEFAULT 0,
     `Tue` TINYINT(1) DEFAULT 0,

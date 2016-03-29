@@ -207,7 +207,7 @@ class SkeModelPDO extends SkeModel {
             : 'sked_events.starts_at';
 
         if ($this->bAdjustForLeadTime)
-            $strSql = 'DATE_SUB(' . $strSql . ', INTERVAL sked_events.lead_time MINUTE)';
+            $strSql = 'DATE_SUB(' . $strSql . ', INTERVAL sked_event_members.lead_time MINUTE)';
 
         return $strSql;
     }
@@ -236,7 +236,6 @@ class SkeModelPDO extends SkeModel {
             ? ' INNER JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
                 . ' AND sked_event_members.member_id = :member_id'
             : '';
-        }
     }
 
     /**
@@ -268,7 +267,7 @@ class SkeModelPDO extends SkeModel {
                 break;
 
             case 'INSERT':
-                return $this->oConnector->lastInsertId()
+                return $this->oConnector->lastInsertId();
                 break;
 
             case 'UPDATE':
@@ -282,26 +281,11 @@ class SkeModelPDO extends SkeModel {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
      * Persist event data to the database.
      *
      * @param array $aData Array of data to persist.
-     * @return int true On success.
+     * @return int On success.
      * @throws \Exception On failure.
      */
     protected function saveEvent(array $aData)
@@ -330,6 +314,55 @@ class SkeModelPDO extends SkeModel {
             : 'INSERT INTO sked_events (`' . implode('`,`', array_keys($aData))
                 . '`) VALUES (' . implode(',', $aValues) . ')';
         return $this->queryPDO($strQuery, $aExecParams);
+    }
+
+    /**
+     * Fetch sked_event_members from the database.
+     *
+     * @param int $iEventId
+     * @return array
+     */
+    public function fetchEventMembers(int $iEventId)
+    {
+        return $this->queryPDO(
+            'SELECT * FROM `sked_event_members` WHERE `sked_event_id` = ?',
+            [$iEventId]
+        );
+    }
+
+    /**
+     * Persist event member data to the database.
+     *
+     * @param int $iEventId Event that owns the tags.
+     * @param array $aMembers Array of data to persist.
+     * @return bool Success/failure.
+     */
+    protected function saveEventMembers(int $iEventId, array $aMembers)
+    {
+        if (!empty($aMembers)) {
+            $aExecParams[':sked_event_id'] = $iEventId;
+            $strQuery = 'INSERT IGNORE INTO `sked_event_members`
+                (`sked_event_id`, `member_id`, `owner`, `lead_time`, `created_at`) VALUES ';
+
+            $aValueSets = [];
+            foreach ($aMembers as $iMemberId => $aSettings) {
+                $strMemberParam = ':member_id_' . $iMemberId;
+                $strOwnerParam = ':owner_' . $iMemberId;
+                $strLeadTimeParam = ':lead_time_' . $iMemberId;
+                $aValueSets[] = '(:sked_event_id, ' . $strMemberParam . ', '
+                    . $strOwnerParam . ', ' . $strLeadTimeParam . ', NOW())';
+                $aExecParams[$strMemberParam] = $iMemberId;
+                $aExecParams[$strOwnerParam] = $aSettings['owner'] ?? 0;
+                $aExecParams[$strLeadTimeParam] = $aSettings['lead_time'] ?? 0;
+            }
+
+            $strQuery .= implode(',', $aValueSets) . ' ON DUPLICATE KEY UPDATE'
+                . ' `owner` = VALUES(`owner`), `lead_time` = VALUES(`lead_time`)';
+
+            $this->queryPDO($strQuery, $aExecParams);
+        }
+
+        return true;
     }
 
     /**

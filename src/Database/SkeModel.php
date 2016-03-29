@@ -66,9 +66,27 @@ abstract class SkeModel {
      * Persist event data to the database.
      *
      * @param array $aData Array of data to persist.
-     * @return int|bool Success/failure.
+     * @return int On success.
+     * @throws \Exception On failure.
      */
     abstract protected function saveEvent(array $aData);
+
+    /**
+     * Fetch sked_event_members from the database.
+     *
+     * @param int $iEventId
+     * @return array
+     */
+    abstract public function fetchEventMembers(int $iEventId);
+
+    /**
+     * Persist event member data to the database.
+     *
+     * @param int $iEventId Event that owns the tags.
+     * @param array $aMembers Array of data to persist.
+     * @return bool Success/failure.
+     */
+    abstract protected function saveEventMembers(int $iEventId, array $aMembers);
 
     /**
      * Fetch sked_event_tags from the database.
@@ -134,7 +152,7 @@ abstract class SkeModel {
      * @param int $iMemberId
      * @return $this
      */
-    public function forMember(int $iMemberId)
+    public function forMember(int $iMemberId = null)
     {
         $this->iMemberId = $iMemberId;
         return $this;
@@ -160,12 +178,12 @@ abstract class SkeModel {
             try {
                 $mReturn = $this->saveEvent($aValues);
                 $this->saveEventTags($mReturn, $skeVent->getTags());
-                $this->endTransaction((bool)$mReturn);
+                $this->saveEventMembers($mReturn, $skeVent->getMembers());
             } catch (\Exception $e) {
                 $mReturn = false;
-                $this->endTransaction(false);
                 $skeVent->addError(2, $e->getMessage());
             }
+            $this->endTransaction((bool)$mReturn);
         }
 
         return $mReturn;

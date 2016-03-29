@@ -223,11 +223,6 @@ class SkeForm {
                     'suffix' => 'before',
                 ],
             ],
-            'ends_at' => [
-                'attribs' => [
-                    'label' => 'Repeat Until',
-                ],
-            ],
             'frequency' => [
                 'type' => 'select',
                 'options' => ['' => '-'] + range(1, 31),
@@ -254,6 +249,11 @@ class SkeForm {
                 'attribs' => [
                     'label' => 'On',
                     'multi' => true,
+                ],
+            ],
+            'ends_at' => [
+                'attribs' => [
+                    'label' => 'Repeat Until',
                 ],
             ],
         ];
@@ -304,7 +304,7 @@ class SkeForm {
         foreach ($this->inputs() as $oInput) {
 
             // Start the repeating-event section before "ends_at"
-            if ('ends_at' === $oInput->getName())
+            if ('frequency' === $oInput->getName())
                 $strHtml .= '<h3>For repeating events only</h3>';
 
             // Preceding HTML

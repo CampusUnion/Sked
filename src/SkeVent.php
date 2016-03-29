@@ -22,11 +22,14 @@ class SkeVent {
     /** @var array $aErrors List of validation errors. */
     protected $aErrors = [];
 
+    /** @var array $aMembers Array of sked_event_members. */
+    protected $aMembers = null; // "null" shows we haven't checked DB yet
+
     /** @var array $aProperties Array of properties retrieved from the database. */
     protected $aProperties = [];
 
     /** @var array $aTags Array of sked_event_tags. */
-    protected $aTags = null; // null shows we haven't checked DB yet
+    protected $aTags = null; // "null" shows we haven't checked DB yet
 
     /**
      * Init the event object.
@@ -234,6 +237,36 @@ class SkeVent {
     }
 
     /**
+     * Get associated sked_event_members.
+     *
+     * @return array
+     */
+    public function getMembers()
+    {
+        if (!is_array($this->aMembers) && $this->id) {
+            $this->aMembers = [];
+            foreach (Sked::getEventMembers($this->id) as $aEventMember)
+                $this->aMembers[$aEventMember['member_id']] = $aEventMember;
+        }
+        return $this->aMembers;
+    }
+
+    /**
+     * Set associated sked_event_members.
+     *
+     * @param array $aEventMembers Array of SkeVentMember objects.
+     * @return $this
+     */
+    public function setMembers(array $aEventMembers)
+    {
+        $this->aMembers = [];
+
+        foreach ($aEventMembers as $iMemberId => $skeVentMember)
+            $this->aMembers[$iMemberId] = $skeVentMember;
+
+        return $this;
+    }
+    /**
      * Get associated sked_event_tags.
      *
      * @return array
@@ -245,7 +278,7 @@ class SkeVent {
             foreach (Sked::getEventTags($this->id) as $aEventTag)
                 $this->aTags[$aEventTag['tag_id']] = new SkeVentTag($aEventTag);
         }
-        return (array)$this->aTags;
+        return $this->aTags;
     }
 
     /**
@@ -257,17 +290,17 @@ class SkeVent {
     public function setTags(array $aEventTags)
     {
         $this->aTags = [];
-        foreach ($aEventTags as $iTagId => $skeVentTag) {
 
+        foreach ($aEventTags as $iTagId => $skeVentTag) {
             if (!$skeVentTag instanceof SkeVentTag) {
                 $skeVentTag = new SkeVentTag([
                     'tag_id' => $iTagId,
                     'value' => $skeVentTag,
                 ]);
             }
-
             $this->aTags[$skeVentTag->tag_id] = $skeVentTag;
         }
+
         return $this;
     }
 
@@ -297,7 +330,7 @@ class SkeVent {
         // Sanitize
         $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
             return !empty($mValue) && '-' !== $mValue && (
-                in_array($strKey, ['lead_time', 'created_at', 'updated_at'])
+                in_array($strKey, ['created_at', 'updated_at'])
                 || in_array($strKey, self::WEEKDAYS)
                 || array_key_exists($strKey, SkeForm::getFieldDefinitions())
             );

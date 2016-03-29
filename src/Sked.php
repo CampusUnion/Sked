@@ -72,6 +72,17 @@ class Sked {
     }
 
     /**
+     * Fetch sked_event_members from the database.
+     *
+     * @param int $iEventId
+     * @return array
+     */
+    public static function getEventMembers(int $iEventId)
+    {
+        return static::$oModel->fetchEventMembers($iEventId);
+    }
+
+    /**
      * Fetch sked_event_tags from the database.
      *
      * @param int $iEventId
