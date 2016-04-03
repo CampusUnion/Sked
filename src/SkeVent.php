@@ -183,21 +183,6 @@ class SkeVent {
                     $this->setProperty($strDay, (int)in_array($strDay, $aValues));
                 break;
 
-            // Calculate lead time values
-            case 'lead_time_num':
-            case 'lead_time_unit':
-                $this->aProperties[$strKey] = $mValue;
-                if (isset($this->aProperties['lead_time_num']) && isset($this->aProperties['lead_time_unit'])) {
-                    $this->aProperties['lead_time'] =
-                        $this->aProperties['lead_time_num'] * $this->aProperties['lead_time_unit'];
-                }
-                break;
-            case 'lead_time':
-                $this->aProperties[$strKey] = $mValue;
-                $this->aProperties['lead_time_num'] = $this->getLeadTimeFactor('lead_time_num');
-                $this->aProperties['lead_time_unit'] = $this->getLeadTimeFactor('lead_time_unit');
-                break;
-
             // Process tags
             case 'tags':
                 $this->setTags($mValue);
@@ -215,21 +200,19 @@ class SkeVent {
      * @param string $strFactor "lead_time_num" or "lead_time_unit"
      * @return int
      */
-    protected function getLeadTimeFactor(string $strFactor)
+    public static function getLeadTimeFactor(string $strFactor, int $iLeadTime)
     {
-        $iLeadTime = (int)$this->lead_time;
-
         // minutes
         if ($iLeadTime < 60 || $iLeadTime % 60 !== 0) {
             $iNum = $iLeadTime;
             $iUnit = 1;
         // hours
         } elseif ($iLeadTime % (24 * 60) !== 0) {
-            $iNum = $iLeadTime/60;
+            $iNum = $iLeadTime / 60;
             $iUnit = 60;
         // days
         } else {
-            $iNum = $iLeadTime/(24*60);
+            $iNum = $iLeadTime / (24 * 60);
             $iUnit = 24 * 60;
         }
 
@@ -262,7 +245,7 @@ class SkeVent {
         $this->aMembers = [];
 
         foreach ($aEventMembers as $iMemberId => $skeVentMember)
-            $this->aMembers[$iMemberId] = $skeVentMember;
+            $this->aMembers[$iMemberId] = $skeVentMember + ['member_id' => $iMemberId];
 
         return $this;
     }

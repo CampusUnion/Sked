@@ -243,7 +243,7 @@ class SkeModelPDO extends SkeModel {
      */
     private function queryWhereNotExpired()
     {
-        return ' WHERE (sked_events.ends_at IS NULL OR sked_events.ends_at < :date_start)';
+        return ' WHERE (sked_events.ends_at IS NULL OR sked_events.ends_at > :date_start)';
     }
 
     /**
