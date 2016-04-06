@@ -126,7 +126,7 @@ class SkeDateIterator implements \Iterator {
             $strHtml .= '<td class="sked-cal-date' . (date('Y-m-d') !== $skeDate->format('Y-m-d') ?: ' sked-cal-date-current') . '">';
                 $strHtml .= '<span class="sked-cal-date-num">' . $skeDate->format('j') . '</span>';
                 $strHtml .= '<ul class="sked-cal-date-list">';
-                foreach ($skeDate->skeVents() as $skeVent) {
+                foreach ($skeDate->events() as $skeVent) {
                     $strHtml .= '<li class="sked-cal-date-event">'
                         . '<a href="#" class="sked-cal-event-link" id="skevent-' . $skeVent->id . '">'
                             . $skeVent->label

@@ -31,21 +31,9 @@ class Sked {
      * @param string|true $mEnd End date YYYY-MM-DD, or "true" to return one full month.
      * @return CampusUnion\Sked\SkeDateIterator
      */
-    public function skeDates(string $strStartDate = null, $mEndDate = null)
+    public function dates(string $strStartDate = null, $mEndDate = null)
     {
         return new SkeDateIterator(static::$oModel, $strStartDate, $mEndDate);
-    }
-
-    /**
-     * Shortcut for skeDates(). If you use this, you're boring.
-     *
-     * @param string $strStart Start date YYYY-MM-DD.
-     * @param string|true $mEnd End date YYYY-MM-DD, or "true" to return one full month.
-     * @return CampusUnion\Sked\SkeDateIterator
-     */
-    public function dates(string $strStartDate, $mEndDate = null)
-    {
-        return $this->skeDates($strStartDate, $mEndDate);
     }
 
     /**

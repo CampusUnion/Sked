@@ -31,7 +31,7 @@ class SkeDate {
      * @param int $iMemberId Unique ID of the event participant.
      * @return array
      */
-    public function skeVents(int $iMemberId = null)
+    public function events(int $iMemberId = null)
     {
         $aReturn = [];
         $this->oModel->forMember($iMemberId);

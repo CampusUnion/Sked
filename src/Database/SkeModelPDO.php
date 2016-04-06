@@ -231,11 +231,18 @@ class SkeModelPDO extends SkeModel {
      */
     private function queryJoin()
     {
+        $strReturn = '';
+
         // Check member
-        return $this->iMemberId
-            ? ' INNER JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
-                . ' AND sked_event_members.member_id = :member_id'
-            : '';
+        if (0 === $this->iMemberId) {
+            $strReturn = ' LEFT JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
+                . ' WHERE sked_event_members.member_id IS NULL';
+        } elseif ($this->iMemberId) {
+            $strReturn = ' INNER JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
+                . ' AND sked_event_members.member_id = :member_id';
+        }
+
+        return $strReturn;
     }
 
     /**
@@ -243,7 +250,7 @@ class SkeModelPDO extends SkeModel {
      */
     private function queryWhereNotExpired()
     {
-        return ' WHERE (sked_events.ends_at IS NULL OR sked_events.ends_at > :date_start)';
+        return ' ' . (0 === $this->iMemberId ? 'AND' : 'WHERE') . ' (sked_events.ends_at IS NULL OR sked_events.ends_at > :date_start)';
     }
 
     /**
