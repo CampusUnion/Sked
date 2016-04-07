@@ -226,10 +226,12 @@ class SkeVent {
      */
     public function getMembers()
     {
-        if (!is_array($this->aMembers) && $this->id) {
+        if (!is_array($this->aMembers)) {
             $this->aMembers = [];
-            foreach (Sked::getEventMembers($this->id) as $aEventMember)
-                $this->aMembers[$aEventMember['member_id']] = $aEventMember;
+            if ($this->id) {
+                foreach (Sked::getEventMembers($this->id) as $aEventMember)
+                    $this->aMembers[$aEventMember['member_id']] = $aEventMember;
+            }
         }
         return $this->aMembers;
     }
@@ -249,6 +251,26 @@ class SkeVent {
 
         return $this;
     }
+
+    /**
+     * Get the event owner ID.
+     *
+     * @return int
+     */
+    public function owner()
+    {
+        $iReturn = 0;
+
+        foreach ($this->getMembers() as $iId => $aMember) {
+            if (1 == $aMember['owner']) {
+                $iReturn = $iId;
+                break;
+            }
+        }
+
+        return $iReturn;
+    }
+
     /**
      * Get associated sked_event_tags.
      *
