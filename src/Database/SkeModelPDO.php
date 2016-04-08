@@ -4,6 +4,9 @@ namespace CampusUnion\Sked\Database;
 
 class SkeModelPDO extends SkeModel {
 
+    /** @var array $aQueryParams Array of PDO params to bind. */
+    private $aQueryParams = [];
+
     /**
      * Init the data connector.
      *
@@ -108,11 +111,10 @@ class SkeModelPDO extends SkeModel {
                     % sked_events.frequency = 0
             )';
 
-        $strQuery .= ')';
+        $strQuery .= ')' . $this->queryGroupAndOrder();
 
         // PDO
-        return $this->queryPDO($strQuery, [
-            ':member_id' => $this->iMemberId,
+        return $this->queryPDO($strQuery, $this->aQueryParams + [
             ':date_start' => $strDateStart,
             ':date_start_NOTIME' => date('Y-m-d', strtotime($strDateStart)),
             ':date_start_DAYOFMONTH' => date('d', strtotime($strDateStart)),
@@ -188,9 +190,9 @@ class SkeModelPDO extends SkeModel {
 
                 $strQuery .= ')';
             $strQuery .= ')';
-        $strQuery .= ')';
+        $strQuery .= ')' . $this->queryGroupAndOrder();
 
-        return $this->queryPDO($strQuery, []);
+        return $this->queryPDO($strQuery, $this->aQueryParams);
     }
 
     /**
@@ -217,7 +219,7 @@ class SkeModelPDO extends SkeModel {
      */
     private function querySelectFrom(string $strDateStart)
     {
-        return 'SELECT *,
+        return 'SELECT sked_events.*,
             CONCAT_WS(
                 " ",
                 "' . substr($strDateStart, 0, 10) . '",
@@ -233,13 +235,33 @@ class SkeModelPDO extends SkeModel {
     {
         $strReturn = '';
 
+        // Check tags
+        if (!empty($this->aTags)) {
+            foreach ($this->aTags as $iTagId => $mValue) {
+                $strTagParam = ':tag_id_' . $iTagId;
+                $strValueParam = ':tag_value_' . $iTagId;
+                $strReturn .= ' INNER JOIN sked_event_tags ON sked_event_tags.sked_event_id = sked_events.id'
+                    . ' AND sked_event_tags.tag_id = ' . $strTagParam
+                    . ' AND sked_event_tags.value = ' . $strValueParam;
+                $this->aQueryParams[$strTagParam] = $iTagId;
+                $this->aQueryParams[$strValueParam] = $mValue;
+            }
+        }
+
         // Check member
-        if (0 === $this->iMemberId) {
-            $strReturn = ' LEFT JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
-                . ' WHERE sked_event_members.member_id IS NULL';
-        } elseif ($this->iMemberId) {
-            $strReturn = ' INNER JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
-                . ' AND sked_event_members.member_id = :member_id';
+        if ($this->iMemberId) {
+            if ($this->bPublic) {
+                $strReturn .= ' LEFT JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
+                    . ' WHERE (sked_event_members.member_id IS NULL OR ('
+                        . 'sked_event_members.owner = 0 AND sked_events.id NOT IN ('
+                            . 'SELECT sked_event_id FROM sked_event_members WHERE member_id = :member_id'
+                        . ')'
+                    . '))';
+            } else {
+                $strReturn .= ' INNER JOIN sked_event_members ON sked_event_members.sked_event_id = sked_events.id'
+                    . ' AND sked_event_members.member_id = :member_id';
+            }
+            $this->aQueryParams[':member_id'] = $this->iMemberId;
         }
 
         return $strReturn;
@@ -250,7 +272,16 @@ class SkeModelPDO extends SkeModel {
      */
     private function queryWhereNotExpired()
     {
-        return ' ' . (0 === $this->iMemberId ? 'AND' : 'WHERE') . ' (sked_events.ends_at IS NULL OR sked_events.ends_at > :date_start)';
+        return ' ' . ($this->iMemberId && $this->bPublic ? 'AND' : 'WHERE')
+            . ' (sked_events.ends_at IS NULL OR sked_events.ends_at > :date_start)';
+    }
+
+    /**
+     *
+     */
+    private function queryGroupAndOrder()
+    {
+        return ' GROUP BY sked_events.id ORDER BY session_at ASC';
     }
 
     /**

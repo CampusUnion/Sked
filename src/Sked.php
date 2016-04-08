@@ -22,6 +22,10 @@ class Sked {
 
         $strModelClass = 'CampusUnion\Sked\Database\SkeModel' . ucfirst($aOptions['data_connector']['name']);
         static::$oModel = new $strModelClass($aOptions['data_connector']['options']);
+
+        // Tags
+        if (isset($aOptions['tags']))
+            static::$oModel->withTags($aOptions['tags']);
     }
 
     /**
@@ -79,6 +83,18 @@ class Sked {
     public static function getEventTags(int $iEventId)
     {
         return static::$oModel->fetchEventTags($iEventId);
+    }
+
+    /**
+     * Limit search results to events with certain tags.
+     *
+     * @param array $aTags The required tags.
+     * @return $this
+     */
+    public function withTags(array $aTags)
+    {
+        static::$oModel->withTags($aTags);
+        return $this;
     }
 
     /**

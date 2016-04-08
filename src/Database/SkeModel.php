@@ -9,8 +9,14 @@ abstract class SkeModel {
 
     use \CampusUnion\Sked\ValidatesDates;
 
+    /** @var array $aTags Limit search results to events with certain tags. */
+    protected $aTags;
+
     /** @var bool $bAdjustForLeadTime Used for sending reminders ahead of time. */
     protected $bAdjustForLeadTime = false;
+
+    /** @var bool $bPublicEvents Retrieve only public events? (those without an owner) */
+    protected $bPublic = false;
 
     /** @var int $iMemberId Whose events are we looking for? */
     protected $iMemberId;
@@ -159,6 +165,30 @@ abstract class SkeModel {
     }
 
     /**
+     * Limit search results to events with certain tags.
+     *
+     * @param array $aTags The required tags.
+     * @return $this
+     */
+    public function withTags(array $aTags)
+    {
+        $this->aTags = array_filter($aTags);
+        return $this;
+    }
+
+    /**
+     * Retrieve only public events? (those without an owner)
+     *
+     * @param bool $bPublic
+     * @return $this
+     */
+    public function public(bool $bPublic = true)
+    {
+        $this->bPublic = $bPublic;
+        return $this;
+    }
+
+    /**
      * Persist data to the database.
      *
      * @param CampusUnion\Sked\SkeVent $skeVent Passed by reference.
@@ -207,7 +237,7 @@ abstract class SkeModel {
         foreach (SkeForm::getFieldDefinitions() as $strKey => $aDefinition) {
 
             // Required
-            if (($aDefinition['required'] ?? false) && !isset($aData[$strKey])) {
+            if (!isset($aData[$strKey]) && ($aDefinition['required'] ?? false) && !isset($aData['id'])) {
                 $bValid = false;
                 $skeVent->addError(
                     $strKey,
