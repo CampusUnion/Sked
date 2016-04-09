@@ -234,7 +234,7 @@ class SkeForm {
             'interval' => [
                 'type' => 'select',
                 'options' => [
-                    '' => '-',
+                    SkeVent::INTERVAL_ONCE => '-',
                     SkeVent::INTERVAL_DAILY => 'day',
                     SkeVent::INTERVAL_WEEKLY => 'week',
                     SkeVent::INTERVAL_MONTHLY => 'month',

@@ -263,7 +263,7 @@ abstract class SkeModel {
                     'A frequency is required for recurring events.'
                 );
             }
-            if (!isset($aData['interval'])) {
+            if (!isset($aData['interval']) || SkeVent::INTERVAL_ONCE === $aData['interval']) {
                 $bValid = false;
                 $skeVent->addError(
                     'interval',
