@@ -1,4 +1,4 @@
-CREATE TABLE `sked_event_members` (
+CREATE TABLE IF NOT EXISTS `sked_event_members` (
     `sked_event_id` INT UNSIGNED COMMENT '',
     `member_id` INT UNSIGNED COMMENT '',
     `owner` TINYINT(1) UNSIGNED COMMENT '',

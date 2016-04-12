@@ -1,4 +1,4 @@
-CREATE TABLE `sked_events` (
+CREATE TABLE IF NOT EXISTS `sked_events` (
     `id` INT UNSIGNED AUTO_INCREMENT,
     `label` VARCHAR(255) NOT NULL COMMENT 'Label for the event',
     `description` TEXT DEFAULT NULL COMMENT 'Optional detailed description of the event',

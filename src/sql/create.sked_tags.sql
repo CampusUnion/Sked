@@ -1,4 +1,4 @@
-CREATE TABLE `sked_tags` (
+CREATE TABLE IF NOT EXISTS `sked_tags` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `label` VARCHAR(255) NOT NULL,
     `created_at` DATETIME NOT NULL,
