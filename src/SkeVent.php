@@ -42,8 +42,7 @@ class SkeVent {
         if (!isset($aProperties['created_at']))
             $aProperties['created_at'] = date('Y-m-d H:i:s');
 
-        foreach ($aProperties as $strKey => $mValue)
-            $this->setProperty($strKey, $mValue);
+        $this->setProperties($aProperties);
     }
 
     /**
@@ -192,6 +191,18 @@ class SkeVent {
                 $this->aProperties[$strKey] = $mValue;
                 break;
         }
+    }
+
+    /**
+     * Set properties from array.
+     *
+     * @param array $aProperties
+     */
+    public function setProperties(array $aProperties)
+    {
+        $bRepeats = $aProperties['repeats'] ?? false;
+        foreach ($aProperties as $strKey => $mValue)
+            $this->setProperty($strKey, $mValue);
     }
 
     /**

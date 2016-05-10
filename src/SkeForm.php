@@ -223,12 +223,19 @@ class SkeForm {
                     'suffix' => 'before',
                 ],
             ],
+            'repeats' => [
+                'type' => 'checkbox',
+                'attribs' => [
+                    'label' => 'Repeating?',
+                ],
+            ],
             'frequency' => [
                 'type' => 'select',
                 'options' => ['' => '-'] + range(1, 31),
                 'attribs' => [
                     'label' => 'Repeat every',
                     'has_follower' => true,
+                    'is_recurring_field' => true,
                 ],
             ],
             'interval' => [
@@ -241,6 +248,7 @@ class SkeForm {
                 ],
                 'attribs' => [
                     'is_follower' => true,
+                    'is_recurring_field' => true,
                 ],
             ],
             'weekdays' => [
@@ -249,11 +257,13 @@ class SkeForm {
                 'attribs' => [
                     'label' => 'On',
                     'multi' => true,
+                    'is_recurring_field' => true,
                 ],
             ],
             'ends_at' => [
                 'attribs' => [
                     'label' => 'Repeat Until',
+                    'is_recurring_field' => true,
                 ],
             ],
         ];
@@ -302,10 +312,6 @@ class SkeForm {
 
         // Add inputs
         foreach ($this->inputs() as $oInput) {
-
-            // Start the repeating-event section before "ends_at"
-            if ('frequency' === $oInput->getName())
-                $strHtml .= '<h3>For repeating events only</h3>';
 
             // Preceding HTML
             if (!$oInput->isFollower())

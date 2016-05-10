@@ -13,8 +13,11 @@ class SkeFormInput {
     /** @var bool $bHasFollower Is there an input that immediately follows this one? */
     protected $bHasFollower = false;
 
-    /** @var bool $bHasFollower Does this input immediately follow another? */
+    /** @var bool $bIsFollower Does this input immediately follow another? */
     protected $bIsFollower = false;
+
+    /** @var bool $bIsRecurringField Is this input related to recurring events? */
+    protected $bIsRecurringField = false;
 
     /** @var bool $bMulti Is this a multi-element input? */
     protected $bMulti = false;
@@ -71,6 +74,10 @@ class SkeFormInput {
             $this->bIsFollower = (bool)$aAttribs['is_follower'];
             unset($aAttribs['is_follower']);
         }
+        if (isset($aAttribs['is_recurring_field'])) {
+            $this->bIsRecurringField = (bool)$aAttribs['is_recurring_field'];
+            unset($aAttribs['is_recurring_field']);
+        }
 
         $this->aAttribs += ['id' => $strName] + $aAttribs;
         if (!empty($aOptions))
@@ -100,27 +107,25 @@ class SkeFormInput {
         }
     }
 
+    /** @return string Input type. */
+    public function getType()
+    {
+        return 'input' === $this->strElementType ? $this->aAttribs['type'] : $this->strElementType;
+    }
+
     /** @return string Name/ID of the field. */
     public function getName()
     {
         return $this->strName;
     }
 
-    /**
-     * Get error message.
-     *
-     * @return string Detailed error message.
-     */
+    /** @return string Detailed error message. */
     public function getError()
     {
         return $this->strErrorMessage;
     }
 
-    /**
-     * Check for error message.
-     *
-     * @return bool
-     */
+    /** @return bool Check for error message. */
     public function hasError()
     {
         return !!$this->strErrorMessage;
@@ -150,41 +155,31 @@ class SkeFormInput {
         return $this;
     }
 
-    /**
-     * Is this a date/time field?
-     *
-     * @return bool
-     */
+    /** @return bool Is this a date/time field? */
     public function isDateField()
     {
         return in_array($this->getName(), ['starts_at', 'ends_at']);
     }
 
-    /**
-     * Is there an input that immediately follows this one?
-     *
-     * @return bool
-     */
+    /** @return bool Is there an input that immediately follows this one? */
     public function hasFollower()
     {
         return $this->bHasFollower;
     }
 
-    /**
-     * Does this input immediately follow another?
-     *
-     * @return bool
-     */
+    /** @return bool Does this input immediately follow another? */
     public function isFollower()
     {
         return $this->bIsFollower;
     }
 
-    /**
-     * Is this a multi-checkbox/multi-radio field?
-     *
-     * @return bool
-     */
+    /** @return bool Is this input related to recurring events? */
+    public function isRecurringField()
+    {
+        return $this->bIsRecurringField;
+    }
+
+    /** @return bool Is this a multi-checkbox/multi-radio field? */
     public function isMulti()
     {
         return $this->bMulti;
@@ -221,8 +216,14 @@ class SkeFormInput {
      */
     protected function renderSingle()
     {
+        $strHtml = '';
+
+        // Apply label?
+        if (in_array($this->getType(), ['checkbox', 'radio']))
+            $strHtml .= '<label class="sked-input-multi">';
+
         // Build opening tag
-        $strHtml = '<' . $this->strElementType . ' ' . $this->renderAttribs() . '>';
+        $strHtml .= '<' . $this->strElementType . ' ' . $this->renderAttribs() . '>';
 
         // Optional - Build inner HTML
         if (!empty($this->aOptions)) {
@@ -241,6 +242,10 @@ class SkeFormInput {
         // Optional - Build closing tag
         if ('input' !== $this->strElementType)
             $strHtml .= '</' . $this->strElementType . '>';
+
+        // Close label?
+        if (in_array($this->getType(), ['checkbox', 'radio']))
+            $strHtml .= '</label>';
 
         return $strHtml;
     }
