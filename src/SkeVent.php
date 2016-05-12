@@ -177,9 +177,7 @@ class SkeVent {
 
             // Parse weekday values
             case 'weekdays':
-                $aValues = (array)$mValue;
-                foreach (self::WEEKDAYS as $strDay)
-                    $this->setProperty($strDay, (int)in_array($strDay, $aValues));
+            $this->setWeekdays((array)$mValue);
                 break;
 
             // Process tags
@@ -200,9 +198,34 @@ class SkeVent {
      */
     public function setProperties(array $aProperties)
     {
-        $bRepeats = $aProperties['repeats'] ?? false;
         foreach ($aProperties as $strKey => $mValue)
             $this->setProperty($strKey, $mValue);
+
+        $this->adjustRecurringFields();
+    }
+
+    /**
+     * Set each weekday property based on an array of weekday abbreviations.
+     *
+     * @param array $aValues List of weekday abbreviations to activate.
+     */
+    protected function setWeekdays(array $aValues = [])
+    {
+        foreach (self::WEEKDAYS as $strDay)
+            $this->setProperty($strDay, (int)in_array($strDay, $aValues));
+    }
+
+    /**
+     * Reset all the recurring-event fields if not a repeating event.
+     */
+    protected function adjustRecurringFields()
+    {
+        if (array_key_exists('repeats', $this->aProperties) && !$this->repeats) {
+            $this->frequency = null;
+            $this->interval = self::INTERVAL_ONCE;
+            $this->setWeekdays();
+            $this->ends_at = null;
+        }
     }
 
     /**
@@ -338,12 +361,13 @@ class SkeVent {
     /**
      * Convert to an array of database properties.
      *
-     * @param bool $bIncludeTags Should tags be included?
+     * @param bool $bIncludeExtras Should tags & "repeats" be included?
      * @return array
      */
-    public function toArray(bool $bIncludeTags = true)
+    public function toArray(bool $bIncludeExtras = true)
     {
         // Sanitize
+        $this->adjustRecurringFields();
         $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
             return !empty($mValue) && '-' !== $mValue && (
                 in_array($strKey, ['created_at', 'updated_at'])
@@ -357,8 +381,12 @@ class SkeVent {
             $aReturn['ends_at'] = date('Y-m-d H:i:s', strtotime($aReturn['ends_at']));
 
         // Include tags?
-        if ($bIncludeTags)
+        if ($bIncludeExtras) {
             $aReturn['tags'] = $this->getTags();
+            $aReturn['repeats'] = self::INTERVAL_ONCE !== $aReturn['interval'] ? '1' : null;
+        } else {
+            unset($aReturn['repeats']);
+        }
 
         return $aReturn;
     }

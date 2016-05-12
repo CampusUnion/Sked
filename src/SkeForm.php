@@ -225,8 +225,10 @@ class SkeForm {
             ],
             'repeats' => [
                 'type' => 'checkbox',
+                'options' => [1 => ''],
                 'attribs' => [
                     'label' => 'Repeating?',
+                    'multi' => true,
                 ],
             ],
             'frequency' => [
