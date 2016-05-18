@@ -70,7 +70,15 @@ class SkeModelPDO extends SkeModel {
             $strQuery .= ' sked_events.starts_at BETWEEN :date_start AND :date_end';
 
             // Daily
-            $strQuery .= ' OR sked_events.interval = "1"';
+            $strQuery .= ' OR (
+                sked_events.interval = "1"
+                AND (
+                    DATEDIFF(
+                        :date_start_NOTIME,
+                        DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d")
+                    )/sked_events.frequency
+                ) % 1 =0
+            )';
 
             // Day of week matches for weekly events
             $strQuery .= ' OR (
