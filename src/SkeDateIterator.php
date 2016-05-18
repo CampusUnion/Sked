@@ -9,6 +9,9 @@ class SkeDateIterator implements \Iterator {
     /** @var int Limit number of days to iterate to 10 years. */
     const MAX_DATES = 365 * 10;
 
+    /** @var int $iTimezoneOffset Timezone offset (+/- UTC) to alter display. */
+    protected $iTimezoneOffset = 0;
+
     /** @var \CampusUnion\Sked\Database\SkeModel $oModel Data layer. */
     protected $oModel;
 
@@ -51,6 +54,19 @@ class SkeDateIterator implements \Iterator {
             $this->validateDate($mEnd);
             $this->strEnd = $mEnd;
         }
+    }
+
+    /**
+     * Set the timezone offset for date display.
+     *
+     * @param int $iTimezoneOffset
+     * @return $this
+     */
+    public function setTimezone(int $iTimezoneOffset)
+    {
+        $this->iTimezoneOffset = $iTimezoneOffset;
+
+        return $this;
     }
 
     /** @return int Number of dates in the range. */
@@ -130,7 +146,7 @@ class SkeDateIterator implements \Iterator {
                     $strHtml .= '<li class="sked-cal-date-event">'
                         . '<a href="#" class="sked-cal-event-link" id="skevent-' . $skeVent->id . '">'
                             . $skeVent->label
-                        . '</a><span>' . $skeVent->time() . '</span>'
+                        . '</a><span>' . $skeVent->time('g:ia', $this->iTimezoneOffset) . '</span>'
                     . '</li>';
                 }
                 $strHtml .= '<ul>';

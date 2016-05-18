@@ -2,6 +2,8 @@
 
 namespace CampusUnion\Sked;
 
+use Carbon\Carbon;
+
 class SkeVent {
 
     /** @var string INTERVAL_ONCE */
@@ -30,6 +32,15 @@ class SkeVent {
 
     /** @var array $aTags Array of sked_event_tags. */
     protected $aTags = null; // "null" shows we haven't checked DB yet
+
+    /** @var int $strTimezone PHP timezone name. */
+    protected $strTimezone = 'UTC';
+
+    /** @var string $strStartsAt Save the original starts_at value for timezone manipulation. */
+    protected $strStartsAt;
+
+    /** @var string $strEndsAt Save the original ends_at value for timezone manipulation. */
+    protected $strEndsAt;
 
     /**
      * Init the event object.
@@ -185,6 +196,16 @@ class SkeVent {
                 $this->setTags($mValue);
                 break;
 
+            // Save datetimes & timezone for later
+            case 'timezone':
+                $this->strTimezone = $mValue;
+                break;
+            case 'starts_at':
+            case 'ends_at':
+                $strProperty = 'starts_at' === $strKey ? 'strStartsAt' : 'strEndsAt';
+                $this->$strProperty = $mValue;
+                // no break, so it falls through to default
+
             default:
                 $this->aProperties[$strKey] = $mValue;
                 break;
@@ -201,7 +222,7 @@ class SkeVent {
         foreach ($aProperties as $strKey => $mValue)
             $this->setProperty($strKey, $mValue);
 
-        $this->adjustRecurringFields();
+        $this->adjustDependentFields();
     }
 
     /**
@@ -216,15 +237,31 @@ class SkeVent {
     }
 
     /**
-     * Reset all the recurring-event fields if not a repeating event.
+     * Adjust fields that are dependent upon other fields.
+     *
+     * - Reset all the recurring-event fields if not a repeating event.
+     * - Adjust datetimes for timezone offsets
      */
-    protected function adjustRecurringFields()
+    protected function adjustDependentFields()
     {
+        // Recurring-event fields
         if (array_key_exists('repeats', $this->aProperties) && !$this->repeats) {
             $this->frequency = null;
             $this->interval = self::INTERVAL_ONCE;
             $this->setWeekdays();
             $this->ends_at = null;
+        }
+
+        // Datetimes & timezone
+        if (!is_null($this->strStartsAt)) {
+            $this->aProperties['starts_at'] = Carbon::parse($this->strStartsAt)
+                ->subHours(Carbon::now($this->strTimezone)->offsetHours)
+                ->toDateTimeString();
+        }
+        if (!is_null($this->strEndsAt)) {
+            $this->aProperties['ends_at'] = Carbon::parse($this->strEndsAt)
+                ->subHours(Carbon::now($this->strTimezone)->offsetHours)
+                ->toDateTimeString();
         }
     }
 
@@ -367,7 +404,8 @@ class SkeVent {
     public function toArray(bool $bIncludeExtras = true)
     {
         // Sanitize
-        $this->adjustRecurringFields();
+        $this->adjustDependentFields();
+
         $aReturn = array_filter($this->aProperties, function($mValue, $strKey) {
             return !empty($mValue) && '-' !== $mValue && (
                 in_array($strKey, ['created_at', 'updated_at'])
