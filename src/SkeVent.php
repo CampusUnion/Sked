@@ -254,13 +254,13 @@ class SkeVent {
 
         // Datetimes & timezone
         if (!is_null($this->strStartsAt)) {
-            $this->aProperties['starts_at'] = Carbon::parse($this->strStartsAt)
-                ->subHours(Carbon::now($this->strTimezone)->offsetHours)
+            $this->aProperties['starts_at'] = Carbon::parse($this->strStartsAt, $this->strTimezone)
+                ->setTimezone('UTC')
                 ->toDateTimeString();
         }
         if (!is_null($this->strEndsAt)) {
-            $this->aProperties['ends_at'] = Carbon::parse($this->strEndsAt)
-                ->subHours(Carbon::now($this->strTimezone)->offsetHours)
+            $this->aProperties['ends_at'] = Carbon::parse($this->strEndsAt, $this->strTimezone)
+                ->setTimezone('UTC')
                 ->toDateTimeString();
         }
     }
@@ -384,15 +384,14 @@ class SkeVent {
      * Format the time using the given pattern.
      *
      * @param string $strFormat PHP date format.
-     * @param int $iTimezoneOffset Optional timezone adjustment.
+     * @param string $strTimezone PHP timezone name.
      * @return string
      */
-    public function time(string $strFormat = 'g:ia', int $iTimezoneOffset = 0)
+    public function time(string $strFormat = 'g:ia', string $strTimezone = 'UTC')
     {
-        return date(
-            $strFormat,
-            strtotime($this->session_at ?? $this->starts_at) + ($iTimezoneOffset * 60 * 60)
-        );
+        return Carbon::parse($this->session_at ?? $this->starts_at)
+            ->setTimezone($strTimezone)
+            ->format($strFormat);
     }
 
     /**
