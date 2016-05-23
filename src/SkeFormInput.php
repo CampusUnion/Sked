@@ -237,6 +237,8 @@ class SkeFormInput {
                 $strHtml .= '<option value="' . $mValue . '"' . $strSelected . '>'
                     . $strLabel . '</option>';
             }
+        } elseif ('textarea' === $this->strElementType) {
+            $strHtml .= $this->mValue;
         }
 
         // Optional - Build closing tag
