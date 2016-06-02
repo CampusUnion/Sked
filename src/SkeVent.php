@@ -409,7 +409,7 @@ class SkeVent {
             return !empty($mValue) && '-' !== $mValue && (
                 in_array($strKey, ['created_at', 'updated_at'])
                 || in_array($strKey, self::WEEKDAYS)
-                || array_key_exists($strKey, SkeForm::getFieldDefinitions())
+                || array_key_exists($strKey, Sked::form()->getFieldDefinitions())
             );
         }, ARRAY_FILTER_USE_BOTH);
         if (isset($aReturn['starts_at']))

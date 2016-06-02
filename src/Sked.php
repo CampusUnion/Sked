@@ -58,7 +58,7 @@ class Sked {
      * @param array|CampusUnion\Sked\SkeVent $skeVent Event object for populating form defaults.
      * @return CampusUnion\Sked\SkeForm
      */
-    public function form(array $aOptions = [], $skeVent = null)
+    public static function form(array $aOptions = [], $skeVent = null)
     {
         return new SkeForm($aOptions, $skeVent);
     }

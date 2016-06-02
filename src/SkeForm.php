@@ -7,6 +7,9 @@ class SkeForm {
     /** @var array $aAttribs HTML element attributes. */
     protected $aAttribs = [];
 
+    /** @var array $aMemberOptions Options for the member select input. */
+    protected $aMemberOptions = [];
+
     /** @var bool $bSuccess Was a previous submission successful? */
     protected $bSuccess;
 
@@ -33,6 +36,7 @@ class SkeForm {
     {
         $this->setBeforeInput($aOptions)
             ->setAfterInput($aOptions)
+            ->setMemberOptions($aOptions)
             ->setAttribs($aOptions);
         if ($mSkeVent instanceof SkeVent) {
             $this->setSkeVent($mSkeVent)
@@ -72,7 +76,7 @@ class SkeForm {
      *                     function to remove the beforeInput from the original array.
      * @return $this
      */
-    public function setAfterInput($mAfterInput)
+    public function setAfterInput(&$mAfterInput)
     {
         if (is_array($mAfterInput)) {
             $strAfterInput = $mAfterInput['afterInput'] ?? null;
@@ -87,9 +91,22 @@ class SkeForm {
     }
 
     /**
+     * Set the options for the members fields.
+     *
+     * @param array $aMemberOptions List of members to choose from.
+     * @return $this
+     */
+    public function setMemberOptions(array &$aMemberOptions)
+    {
+        $this->aMemberOptions = $aMemberOptions['members'] ?? $aMemberOptions;
+        unset($aMemberOptions['members']);
+        return $this;
+    }
+
+    /**
      * Set the HTML element attributes.
      *
-     * @param array The HTML element attributes.
+     * @param array $aAttribs The HTML element attributes.
      * @return $this
      */
     public function setAttribs(array $aAttribs)
@@ -149,7 +166,7 @@ class SkeForm {
     }
 
     /** @return array List of form fields. */
-    public static function getFieldDefinitions()
+    public function getFieldDefinitions()
     {
         // Set up options for 'duration' field
         $aDurationOptions = [];
@@ -167,7 +184,7 @@ class SkeForm {
         }
 
         // List fields
-        return [
+        $aFields = [
             'id' => [
                 'type' => 'hidden',
                 'attribs' => [
@@ -268,12 +285,21 @@ class SkeForm {
                     'is_recurring_field' => true,
                 ],
             ],
-            'members' => [
+        ];
+
+        // Show "Invite People" field?
+        if (!empty($this->aMemberOptions)) {
+            $aFields['members'] = [
+                'type' => 'select',
+                'options' => $this->aMemberOptions,
                 'attribs' => [
                     'label' => 'Invite People',
+                    // 'multi' => true,
                 ],
-            ],
-        ];
+            ];
+        }
+
+        return $aFields;
     }
 
     /**
@@ -284,7 +310,7 @@ class SkeForm {
     public function inputs()
     {
         $aReturn = [];
-        foreach (static::getFieldDefinitions() as $strFieldName => $aField) {
+        foreach ($this->getFieldDefinitions() as $strFieldName => $aField) {
             $skeFormInput = new SkeFormInput(
                 $strFieldName,
                 $aField['type'] ?? 'text',

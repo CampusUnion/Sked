@@ -234,7 +234,7 @@ abstract class SkeModel {
         $aData = $skeVent->toArray();
 
         // Check required fields && valid options
-        foreach (SkeForm::getFieldDefinitions() as $strKey => $aDefinition) {
+        foreach (Sked::form()->getFieldDefinitions() as $strKey => $aDefinition) {
 
             // Required
             if (!isset($aData[$strKey]) && ($aDefinition['required'] ?? false) && !isset($aData['id'])) {
