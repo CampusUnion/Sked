@@ -130,8 +130,13 @@ class SkeDateIterator implements \Iterator {
 
         $i = 0;
         $strHtml = '<h3 class="sked-cal-title">' . date('F', strtotime($this->strStart))
-            . '</h3><table class="sked-cal"><tr>';
+            . '</h3><table class="sked-cal"><thead>';
 
+        // Day headers
+        foreach (SkeVent::WEEKDAYS as $strDay)
+            $strHtml .= '<th><center>' . $strDay . '</center></th>';
+
+        $strHtml .= '</thead><tr>';
         for ($j = 0; $j < $this->monthPadDates(); $j++) {
             $i++;
             $strHtml .= '<td></td>';
@@ -144,7 +149,9 @@ class SkeDateIterator implements \Iterator {
                 $strHtml .= '<ul class="sked-cal-date-list">';
                 foreach ($skeDate->events() as $skeVent) {
                     $strHtml .= '<li class="sked-cal-date-event">'
-                        . '<a href="#" class="sked-cal-event-link" id="skevent-' . $skeVent->id . '">'
+                        . '<a href="#" class="sked-cal-event-link" id="skevent-'
+                            . $skeVent->id . '" data-owner-id="' . $skeVent->owner()
+                        . '">'
                             . $skeVent->label
                         . '</a><span>' . $skeVent->time('g:ia', $this->strTimezone) . '</span>'
                     . '</li>';

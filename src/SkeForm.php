@@ -268,6 +268,11 @@ class SkeForm {
                     'is_recurring_field' => true,
                 ],
             ],
+            'members' => [
+                'attribs' => [
+                    'label' => 'Invite People',
+                ],
+            ],
         ];
     }
 
