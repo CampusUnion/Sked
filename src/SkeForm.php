@@ -294,7 +294,7 @@ class SkeForm {
                 'options' => $this->aMemberOptions,
                 'attribs' => [
                     'label' => 'Invite People',
-                    // 'multi' => true,
+                    'multi' => true,
                 ],
             ];
         }

@@ -65,6 +65,9 @@ class SkeFormInput {
             $this->strName .= '[]';
             $this->bMulti = $aAttribs['multi'];
             unset($aAttribs['multi']);
+
+            if ('select' === $strType)
+                $aAttribs['multiple'] = true;
         }
         if (isset($aAttribs['has_follower'])) {
             $this->bHasFollower = (bool)$aAttribs['has_follower'];
@@ -182,7 +185,7 @@ class SkeFormInput {
     /** @return bool Is this a multi-checkbox/multi-radio field? */
     public function isMulti()
     {
-        return $this->bMulti;
+        return $this->bMulti && 'select' !== $this->getType();
     }
 
     /**
@@ -296,6 +299,7 @@ class SkeFormInput {
                 ? ($mValue ? $strKey : '') // just the attribute name for booleans
                 : $strKey . '="' . $mValue . '"'; // otherwise key="value"
         }
+
         return implode(' ', $aHtml);
     }
 
