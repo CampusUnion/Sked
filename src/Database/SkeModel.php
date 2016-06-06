@@ -2,7 +2,7 @@
 
 namespace CampusUnion\Sked\Database;
 
-use CampusUnion\Sked\SkeForm;
+use CampusUnion\Sked\Sked;
 use CampusUnion\Sked\SkeVent;
 
 abstract class SkeModel {
