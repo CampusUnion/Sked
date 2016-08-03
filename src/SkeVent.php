@@ -19,7 +19,7 @@ class SkeVent {
     const INTERVAL_MONTHLY = 'Monthly';
 
     /** @var array WEEKDAYS */
-    const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     /** @var array $aErrors List of validation errors. */
     protected $aErrors = [];
