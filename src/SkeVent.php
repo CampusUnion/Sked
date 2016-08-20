@@ -297,7 +297,7 @@ class SkeVent {
      */
     public function getMembers()
     {
-        if (!is_array($this->aMembers)) {
+        if (empty($this->aMembers)) {
             $this->aMembers = [];
             if ($this->id) {
                 foreach (Sked::getEventMembers($this->id) as $aEventMember)
