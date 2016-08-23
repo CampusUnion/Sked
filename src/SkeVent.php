@@ -184,6 +184,10 @@ class SkeVent {
      */
     public function setProperty(string $strKey, $mValue)
     {
+        // Empty strings coming from an HTML form should be nullified
+        if ('' === $mValue)
+            $mValue = null;
+
         switch ($strKey) {
 
             // Parse weekday values
