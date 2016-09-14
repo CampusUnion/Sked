@@ -21,15 +21,22 @@ abstract class SkeModel {
     /** @var int $iMemberId Whose events are we looking for? */
     protected $iMemberId;
 
+    /** @var int $iTimezoneOffset Optional timezone adjustment. */
+    protected $iTimezoneOffset = 0;
+
     /** @var mixed $oConnector Database connector. */
     protected $oConnector;
 
     /**
-     * Init the data connector.
+     * Init the data connector and other options.
      *
      * @param array $aOptions
      */
-    abstract public function __construct(array $aOptions);
+    public function __construct(array $aOptions)
+    {
+        if (isset($aOptions['timezone_offset']))
+            $this->iTimezoneOffset = $aOptions['timezone_offset'];
+    }
 
     /**
      * Retrieve an event from the database.
@@ -115,18 +122,20 @@ abstract class SkeModel {
      * Fetch today's event sessions from the database.
      *
      * @param string $strDate Date of event sessions to fetch.
-     * @param int $iTimezoneOffset Optional timezone adjustment.
      * @return array
      */
-    public function fetch(string $strDate, int $iTimezoneOffset = 0)
+    public function fetch(string $strDate)
     {
         // Filter input
         $this->validateDate($strDate);
         $strDateStart = $strDate . ' 00:00:00';
-        if ($iTimezoneOffset) {
+        if ($this->iTimezoneOffset) {
             $strDateStart = date(
                 'Y-m-d H:i:s',
-                strtotime($strDateStart . ($iTimezoneOffset > 0 ? ' +' : ' ') . $iTimezoneOffset . ' hours')
+                strtotime(
+                    $strDateStart . ($this->iTimezoneOffset < 0 ? ' +' : ' ')
+                        . -$this->iTimezoneOffset . ' hours'
+                )
             );
         }
         $strDateEnd = date('Y-m-d H:i:s', strtotime($strDateStart . ' + 1 day - 1 second'));

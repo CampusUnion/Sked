@@ -8,7 +8,7 @@ class SkeModelPDO extends SkeModel {
     private $aQueryParams = [];
 
     /**
-     * Init the data connector.
+     * Init the data connector and other options.
      *
      * @param array $aOptions
      */
@@ -16,6 +16,7 @@ class SkeModelPDO extends SkeModel {
     {
         $strDsn = $aOptions['driver'] . ':host=' . $aOptions['host'] . ';dbname=' . $aOptions['dbname'];
         $this->oConnector = new \PDO($strDsn, $aOptions['user'], $aOptions['pass']);
+        parent::__construct($aOptions);
     }
 
     /** @return bool Begin a database transaction. */
@@ -69,55 +70,60 @@ class SkeModelPDO extends SkeModel {
             // Original date matches
             $strQuery .= ' sked_events.starts_at BETWEEN :date_start AND :date_end';
 
-            // Daily
-            $strQuery .= ' OR (
-                sked_events.interval = "1"
-                AND (
-                    DATEDIFF(
-                        :date_start_NOTIME,
-                        DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d")
-                    )/sked_events.frequency
-                ) % 1 =0
-            )';
+            // Or it's already started and...
+            $strQuery .= ' OR (sked_events.starts_at <= :date_start AND (';
 
-            // Day of week matches for weekly events
-            $strQuery .= ' OR (
-                sked_events.interval = "7"
-                AND sked_events.' . date('D', strtotime($strDateStart)) . ' = 1
-                AND (
-                    DATEDIFF(
-                        :date_start_NOTIME,
-                        DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d")
-                    )/7
-                ) % sked_events.frequency = 0
-            )';
+                // Daily
+                $strQuery .= ' (
+                    sked_events.interval = "1"
+                    AND (
+                        DATEDIFF(
+                            :date_start_NOTIME,
+                            DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d")
+                        )/sked_events.frequency
+                    ) % 1 =0
+                )';
 
-            // Monthly by day of week
-            // Calculate how many months since first session, see if it's an exact match for today
-            $strQuery .= ' OR (
-                sked_events.interval = "Monthly"
-                AND sked_events.' . date('D', strtotime($strDateStart)) . ' = 1
-                AND TIMESTAMPADD(
-                    MONTH,
-                    ROUND(DATEDIFF(:date_start, DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d"))/30),
-                    sked_events.starts_at
-                ) BETWEEN :date_start AND :date_end
-            )';
+                // Day of week matches for weekly events
+                $strQuery .= ' OR (
+                    sked_events.interval = "7"
+                    AND sked_events.' . date('D', strtotime($strDateStart)) . ' = 1
+                    AND (
+                        DATEDIFF(
+                            :date_start_NOTIME,
+                            DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d")
+                        )/7
+                    ) % sked_events.frequency = 0
+                )';
 
-            // Monthly by date
-            $strQuery .= ' OR (
-                sked_events.interval = "Monthly"
-                AND sked_events.Mon = 0
-                AND sked_events.Tue = 0
-                AND sked_events.Wed = 0
-                AND sked_events.Thu = 0
-                AND sked_events.Fri = 0
-                AND sked_events.Sat = 0
-                AND sked_events.Sun = 0
-                AND DAYOFMONTH(sked_events.starts_at) = :date_start_DAYOFMONTH
-                AND (:date_start_YEARMONTH - EXTRACT(YEAR_MONTH FROM sked_events.starts_at))
-                    % sked_events.frequency = 0
-            )';
+                // Monthly by day of week
+                // Calculate how many months since first session, see if it's an exact match for today
+                $strQuery .= ' OR (
+                    sked_events.interval = "Monthly"
+                    AND sked_events.' . date('D', strtotime($strDateStart)) . ' = 1
+                    AND TIMESTAMPADD(
+                        MONTH,
+                        ROUND(DATEDIFF(:date_start, DATE_FORMAT(sked_events.starts_at, "%Y-%m-%d"))/30),
+                        sked_events.starts_at
+                    ) BETWEEN :date_start AND :date_end
+                )';
+
+                // Monthly by date
+                $strQuery .= ' OR (
+                    sked_events.interval = "Monthly"
+                    AND sked_events.Mon = 0
+                    AND sked_events.Tue = 0
+                    AND sked_events.Wed = 0
+                    AND sked_events.Thu = 0
+                    AND sked_events.Fri = 0
+                    AND sked_events.Sat = 0
+                    AND sked_events.Sun = 0
+                    AND DAYOFMONTH(sked_events.starts_at) = :date_start_DAYOFMONTH
+                    AND (:date_start_YEARMONTH - EXTRACT(YEAR_MONTH FROM sked_events.starts_at))
+                        % sked_events.frequency = 0
+                )';
+
+            $strQuery .= '))';
 
         $strQuery .= ')' . $this->queryGroupAndOrder();
 
@@ -200,7 +206,9 @@ class SkeModelPDO extends SkeModel {
             $strQuery .= ')';
         $strQuery .= ')' . $this->queryGroupAndOrder();
 
-        return $this->queryPDO($strQuery, $this->aQueryParams);
+        return $this->queryPDO($strQuery, $this->aQueryParams + [
+            ':date_start' => $oNow->format('Y-m-d H:i:s'),
+        ]);
     }
 
     /**
