@@ -263,6 +263,17 @@ abstract class SkeModel {
             }
         }
 
+        // Check reminder fields - should both be present, or neither
+        if (isset($aData['lead_time_num']) || isset($aData['lead_time_unit'])) { // one is set
+            if (!isset($aData['lead_time_num']) || !isset($aData['lead_time_unit'])) { // but not both
+                $bValid = false;
+                $skeVent->addError(
+                    isset($aData['lead_time_num']) ? 'lead_time_unit' : 'lead_time_num',
+                    'Both Reminder fields should be filled out (or clear them both).'
+                );
+            }
+        }
+
         // Check recurring-event fields
         if (isset($aData['ends_at'])) {
             if (!isset($aData['frequency'])) {
