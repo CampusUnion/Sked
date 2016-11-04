@@ -144,7 +144,7 @@ class SkeDateIterator implements \Iterator {
 
         foreach ($this as $skeDate) {
             $i++;
-            $strHtml .= '<td class="sked-cal-date' . (date('Y-m-d') !== $skeDate->format('Y-m-d') ?: ' sked-cal-date-current') . '">';
+            $strHtml .= '<td class="sked-cal-date' . (date('Y-m-d') !== $skeDate->format('Y-m-d') ? '' : ' sked-cal-date-current') . '">';
                 $strHtml .= '<span class="sked-cal-date-num">' . $skeDate->format('j') . '</span>';
                 $strHtml .= '<ul class="sked-cal-date-list">';
                 foreach ($skeDate->events() as $skeVent) {
@@ -156,7 +156,7 @@ class SkeDateIterator implements \Iterator {
                         . '</a><span>' . $skeVent->time('g:ia', $this->strTimezone) . '</span>'
                     . '</li>';
                 }
-                $strHtml .= '<ul>';
+                $strHtml .= '</ul>';
             $strHtml .= '</td>';
             if (7 === $i) {
                 $i = 0;
